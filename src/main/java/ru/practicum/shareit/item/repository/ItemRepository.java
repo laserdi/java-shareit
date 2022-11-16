@@ -9,7 +9,6 @@ public interface ItemRepository {
 
     /**
      * Добавить вещь в репозиторий.
-     *
      * @param item добавленная вещь.
      * @return добавленная вещь.
      */
@@ -17,14 +16,12 @@ public interface ItemRepository {
 
     /**
      * Получить список всех вещей.
-     *
      * @return список вещей.
      */
     List<Item> getAllItems(Long userId);
 
     /**
      * Получить вещь по ID.
-     *
      * @param id ID вещи.
      * @return запрашиваемая вещь.
      */
@@ -32,7 +29,6 @@ public interface ItemRepository {
 
     /**
      * Есть ли вещь с ID в хранилище?
-     *
      * @param id ID запрашиваемой вещи.
      * @return True - вещь есть в хранилище, False - вещи нет в хранилище.
      */
@@ -40,21 +36,18 @@ public interface ItemRepository {
 
     /**
      * Удалить вещь с ID из хранилища.
-     *
      * @param id ID удаляемой вещи.
      */
     void removeItemById(Long id);
 
     /**
      * Удалить вещи пользователя с ID = userId.
-     *
      * @param userId ID пользователя, вещи которого надо удалить.
      */
     void removeItemsByUserId(Long userId);
 
     /**
      * Обновить вещь в БД.
-     *
      * @param item вещь.
      * @return обновлённая вещь.
      */
@@ -62,7 +55,6 @@ public interface ItemRepository {
 
     /**
      * Поиск вещей по тексту.
-     *
      * @param text текст.
      * @return список вещей.
      */

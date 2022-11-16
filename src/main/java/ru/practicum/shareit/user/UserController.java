@@ -7,14 +7,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.user.mapper.UserMapper;
-import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 import ru.practicum.shareit.validation.CreateObject;
 import ru.practicum.shareit.validation.UpdateObject;
-import ru.practicum.shareit.validation.ValidationService;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,8 +23,6 @@ import java.util.List;
 @Validated
 public class UserController {
     private final UserService service;
-    private final UserMapper mapper;
-    private final ValidationService validationService;
 
 
     /**
@@ -38,15 +32,9 @@ public class UserController {
      */
     @PostMapping
     ResponseEntity<UserDto> addToStorage(@RequestBody @Validated(CreateObject.class) UserDto userDto) {
+        UserDto createdUser = service.addToStorage(userDto);
 
-        User user = mapper.mapToModel(userDto);
-        User createdUser = service.addToStorage(user);
-
-        ResponseEntity<UserDto> response = new ResponseEntity<>(
-                mapper.mapToDto(createdUser), HttpStatus.CREATED);
-        String message = String.format("В БД добавлен новый пользователь:\t%s", response.getBody());
-        log.info(message);
-        return response;
+        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }
 
     /**
@@ -58,11 +46,7 @@ public class UserController {
     @PatchMapping("/{userId}")
     UserDto updateInStorage(@PathVariable long userId,
                             @Validated({UpdateObject.class}) @RequestBody UserDto userDto) {
-        userDto.setId(userId);
-        User user = mapper.mapToModel(userDto);
-        User updatedUser = service.updateInStorage(user);
-        log.info("Выполнено обновление пользователя в БД.");
-        return mapper.mapToDto(updatedUser);
+        return service.updateInStorage(userDto, userId);
     }
 
     /**
@@ -71,11 +55,7 @@ public class UserController {
      */
     @DeleteMapping("/{userId}")
     ResponseEntity<String> removeFromStorage(@PathVariable Long userId) {
-        User deletedUser = validationService.checkExistUserInDB(userId);
-        service.removeFromStorage(userId);
-        // TODO: 01.11.2022 Удалить вещи пользователя.
-        String message = String.format("Выполнено удаление пользователя с ID = %d. %s", userId, deletedUser);
-        log.info(message);
+        String message = service.removeFromStorage(userId);
         return new ResponseEntity<>(message, HttpStatus.OK);
     }
 
@@ -85,14 +65,8 @@ public class UserController {
      */
     @GetMapping
     ResponseEntity<List<UserDto>> getAllUsersFromStorage() {
-        List<UserDto> allUsersDto = new ArrayList<>();
-        List<User> allUsers = service.getAllUsers();
-
-        allUsers.stream().map(mapper::mapToDto).forEach(allUsersDto::add);
-
-        ResponseEntity<List<UserDto>> response = new ResponseEntity<>(allUsersDto, HttpStatus.OK);
-        log.info("Выдан список всех пользователей.");
-        return response;
+        List<UserDto> allUsersDto = service.getAllUsers();
+        return new ResponseEntity<>(allUsersDto, HttpStatus.OK);
     }
 
     /**
@@ -103,12 +77,6 @@ public class UserController {
      */
     @GetMapping("/{userId}")
     public ResponseEntity<UserDto> getUserById(@PathVariable Long userId) {
-        //Nuzhen li proverka? Ili eyo v service?
-        validationService.checkExistUserInDB(userId);
-        ResponseEntity<UserDto> response = new ResponseEntity<>(
-                mapper.mapToDto(service.getUserById(userId)), HttpStatus.OK);
-        String message = String.format("Выдан ответ на запрос пользователя по ID = %d:\t%s", userId, response);
-        log.info(message);
-        return response;
+        return new ResponseEntity<>(service.getUserById(userId), HttpStatus.OK);
     }
 }

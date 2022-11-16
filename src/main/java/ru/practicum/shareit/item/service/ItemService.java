@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item.service;
 
 
+import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
@@ -9,31 +10,27 @@ public interface ItemService {
 
     /**
      * Добавить вещь в репозиторий.
-     *
      * @param item    добавленная вещь.
      * @param ownerId ID владельца вещи.
      * @return добавленная вещь.
      */
-    Item add(Item item, Long ownerId);
+    ItemDto add(ItemDto item, Long ownerId);
 
     /**
      * Получить список вещей.
-     *
      * @return список вещей.
      */
-    List<Item> getAllItems(Long userId);
+    List<ItemDto> getAllItems(Long userId);
 
     /**
      * Обновить вещь в БД.
-     *
      * @param item вещь.
      * @return обновлённая вещь.
      */
-    Item updateInStorage(Item item, Long ownerId);
+    ItemDto updateInStorage(ItemDto item, Long ownerId, Long itemId);
 
     /**
      * Получить вещь по ID.
-     *
      * @param id ID вещи.
      * @return запрашиваемая вещь.
      */
@@ -41,7 +38,6 @@ public interface ItemService {
 
     /**
      * Есть ли запрашиваемая вещь с ID в хранилище.
-     *
      * @param id ID запрашиваемой вещи.
      * @return запрашиваемая вещь.
      */
@@ -49,17 +45,15 @@ public interface ItemService {
 
     /**
      * Удалить вещь с ID из хранилища.
-     *
      * @param id ID удаляемой вещи.
      */
     Item removeItemById(Long id);
 
     /**
      * Поиск вещей по тексту.
-     *
      * @param text текст.
      * @return список вещей.
      */
-    List<Item> searchItemsByText(String text);
+    List<ItemDto> searchItemsByText(String text);
 
 }

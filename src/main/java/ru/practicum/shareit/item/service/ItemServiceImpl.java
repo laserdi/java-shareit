@@ -1,23 +1,34 @@
 package ru.practicum.shareit.item.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.NotFoundRecordInBD;
+import ru.practicum.shareit.exception.ValidateException;
+import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.validation.ValidationService;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final ValidationService validationService;
 
+    private final ItemMapper mapper;
+
     public ItemServiceImpl(@Qualifier("InMemory") ItemRepository itemRepository,
-                           ValidationService validationService) {
+                           ValidationService validationService, ItemMapper mapper) {
         this.itemRepository = itemRepository;
         this.validationService = validationService;
+        this.mapper = mapper;
     }
 
 
@@ -25,12 +36,21 @@ public class ItemServiceImpl implements ItemService {
      * Обновить вещь в БД. Редактирование вещи. Эндпойнт PATCH /items/{itemId}.
      * <p>Изменить можно название, описание и статус доступа к аренде.</p>
      * <p>Редактировать вещь может только её владелец.</p>
-     *
-     * @param item вещь.
+     * @param itemDto вещь.
+     * @param ownerId ID хозяина вещи.
+     * @param itemId  ID обновляемой вещи.
      * @return обновлённая вещь.
      */
     @Override
-    public Item updateInStorage(Item item, Long ownerId) {
+    public ItemDto updateInStorage(ItemDto itemDto, Long ownerId, Long itemId) {
+        if (ownerId == null) {
+            String message = "Для обновления надо передать ID хозяина вещи.";
+            log.info("Error 400. " + message);
+            throw new ValidateException(message);
+        }
+        itemDto.setOwnerId(ownerId);
+        itemDto.setId(itemId);
+        Item item = mapper.mapToModel(itemDto);
         Item itemFromDB = validationService.checkExistItemInDB(item.getId());
 
         if (!validationService.isOwnerItem(itemFromDB, ownerId)) {
@@ -39,38 +59,47 @@ public class ItemServiceImpl implements ItemService {
         }
         validationService.checkExistUserInDB(ownerId);
         boolean[] isUpdateFields = validationService.checkFieldsForUpdate(item);
-        return itemRepository.updateInStorage(item, isUpdateFields);
+        ItemDto result = mapper.mapToDto(itemRepository.updateInStorage(item, isUpdateFields));
+        log.info("Была обновлена вещь {}, id = {}", result.getName(), result.getId());
+        return result;
     }
 
     /**
      * Добавить вещь в репозиторий.
-     *
-     * @param item    добавленная вещь.
+     * @param itemDto    добавленная вещь.
      * @param ownerId ID владельца вещи.
      * @return добавленная вещь.
      */
     @Override
-    public Item add(Item item, Long ownerId) {
-        item.setOwnerId(ownerId);
+    public ItemDto add(ItemDto itemDto, Long ownerId) {
+        itemDto.setOwnerId(ownerId);
+        Item item = mapper.mapToModel(itemDto);
         validationService.validateItemFields(item);
         validationService.checkMissingItemInDB(item.getId());
         validationService.checkExistUserInDB(item.getOwnerId());
-        return itemRepository.add(item);
+
+        ItemDto result = mapper.mapToDto(itemRepository.add(item));
+        log.info("Выполнено добавление новой вещи в БД: " + result + ".");
+
+        return result;
     }
 
     /**
      * Получить список вещей.
-     *
      * @return список вещей.
      */
     @Override
-    public List<Item> getAllItems(Long userId) {
-        return itemRepository.getAllItems(userId);
+    public List<ItemDto> getAllItems(Long userId) {
+
+        List<ItemDto> result = itemRepository.getAllItems(userId).stream()
+                .filter(item -> item.getOwnerId().equals(userId))
+                .map(mapper::mapToDto).collect(Collectors.toList());
+        log.info("Выдан ответ на запрос вещей пользователя с ID = " + userId + ".");
+        return result;
     }
 
     /**
      * Получить вещь по ID.
-     *
      * @param itemId ID вещи.
      * @return запрашиваемая вещь.
      */
@@ -84,7 +113,6 @@ public class ItemServiceImpl implements ItemService {
 
     /**
      * Есть ли запрашиваемая вещь с ID в хранилище.
-     *
      * @param itemId ID запрашиваемой вещи.
      * @return запрашиваемая вещь.
      */
@@ -95,7 +123,6 @@ public class ItemServiceImpl implements ItemService {
 
     /**
      * Удалить вещь с ID из хранилища.
-     *
      * @param itemId ID удаляемой вещи.
      */
     @Override
@@ -107,12 +134,27 @@ public class ItemServiceImpl implements ItemService {
 
     /**
      * Поиск вещей по тексту.
-     *
      * @param text текст.
      * @return список вещей.
      */
     @Override
-    public List<Item> searchItemsByText(String text) {
-        return itemRepository.searchItemsByText(text);
+    public List<ItemDto> searchItemsByText(String text) {
+
+        if (text == null || text.isBlank()) {
+            String message = String.format("По запросу поиска '%s' передан пустой список.", text);
+            log.info(message);
+            return Collections.emptyList();
+        }
+
+        List<ItemDto> list = new ArrayList<>();
+        for (Item item : itemRepository.searchItemsByText(text)) {
+            ItemDto itemDto = mapper.mapToDto(item);
+            list.add(itemDto);
+        }
+        String message = String.format("По запросу поиска '%s' передан список: %s", text, list);
+        log.info(message);
+
+
+        return list;
     }
 }

@@ -18,7 +18,6 @@ public class ItemRepositoryImpl implements ItemRepository {
 
     /**
      * Добавить вещь в репозиторий.
-     *
      * @param item добавленная вещь.
      * @return добавленная вещь.
      */
@@ -31,7 +30,6 @@ public class ItemRepositoryImpl implements ItemRepository {
 
     /**
      * Получить список всех вещей.
-     *
      * @return список вещей.
      */
     @Override
@@ -42,7 +40,6 @@ public class ItemRepositoryImpl implements ItemRepository {
 
     /**
      * Получить вещь по ID.
-     *
      * @param id ID вещи.
      * @return запрашиваемая вещь.
      */
@@ -53,7 +50,6 @@ public class ItemRepositoryImpl implements ItemRepository {
 
     /**
      * Есть ли вещь с ID в хранилище?
-     *
      * @param id ID запрашиваемой вещи.
      * @return True - вещь есть в хранилище, False - вещи нет в хранилище.
      */
@@ -64,7 +60,6 @@ public class ItemRepositoryImpl implements ItemRepository {
 
     /**
      * Удалить вещь с ID из хранилища.
-     *
      * @param id ID удаляемой вещи.
      */
     @Override
@@ -74,7 +69,6 @@ public class ItemRepositoryImpl implements ItemRepository {
 
     /**
      * Удалить вещи пользователя с ID = userId.
-     *
      * @param userId ID пользователя, вещи которого надо удалить.
      */
     @Override
@@ -83,12 +77,11 @@ public class ItemRepositoryImpl implements ItemRepository {
                 .filter(item -> item.getOwnerId().equals(userId))
                 .map(Item::getId).collect(Collectors.toList());
 
-        idForRemove.forEach(id -> itemMap.remove(id));
+        idForRemove.forEach(itemMap::remove);
     }
 
     /**
      * Обновить вещь в БД.
-     *
      * @param item вещь.
      * @return обновлённая вещь.
      */
@@ -117,7 +110,6 @@ public class ItemRepositoryImpl implements ItemRepository {
 
     /**
      * Поиск вещей по тексту.
-     *
      * @param text текст.
      * @return список вещей.
      */

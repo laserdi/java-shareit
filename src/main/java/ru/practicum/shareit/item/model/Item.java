@@ -1,9 +1,5 @@
 package ru.practicum.shareit.item.model;
 
-/**
- * TODO Sprint add-controllers.
- */
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 

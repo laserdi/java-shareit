@@ -4,9 +4,6 @@ import lombok.Data;
 
 import java.util.Set;
 
-/**
- * TODO Sprint add-controllers.
- */
 @Data
 public class ItemDto {
     Long id;            //Идентификатор вещи.
