@@ -11,7 +11,9 @@ import ru.practicum.shareit.item.service.ItemService;
 import java.util.List;
 
 /**
- * TODO Sprint add-controllers.
+ * Добрый день, Наташа.
+ * Я исправил проект. Перенёс всё из личного репозитория.
+ * Всю проверку и бизнес-логику перенёс в сервисы.
  */
 
 @RestController

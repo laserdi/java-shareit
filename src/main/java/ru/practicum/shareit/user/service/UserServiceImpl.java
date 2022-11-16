@@ -114,59 +114,6 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * Добавить пользователей с ID1 и ID2 в друзья.
-     * @param id1 пользователь №1;
-     * @param id2 пользователь №2.
-     */
-    @Override
-    public void addEachOtherAsFriends(Long id1, Long id2) {
-        //Сделать позже.
-    }
-
-    /**
-     * Удалить пользователей из друзей.
-     * @param id1 пользователь №1.
-     * @param id2 пользователь №2.
-     */
-    @Override
-    public void deleteFromFriends(Long id1, Long id2) {
-
-    }
-
-    /**
-     * Вывести список общих друзей.
-     * @param id1 пользователь №1
-     * @param id2 пользователь №2
-     * @return список общих друзей.
-     */
-    @Override
-    public List<User> getCommonFriends(Long id1, Long id2) {
-        return null;
-    }
-
-    /**
-     * Вывести список друзей пользователя с ID.
-     * @param id ID пользователя.
-     * @return список друзей.
-     */
-    @Override
-    public List<User> getUserFriends(Long id) {
-        return null;
-    }
-
-    /**
-     * Метод проверки наличия пользователя в базе данных по ID.
-     * @param id пользователь, наличие логина которого необходимо проверить в базе данных.
-     * @return ID, найденный в БД по логину. Если возвращается не null, то после этой проверки можно обновлять
-     * пользователя, присвоив ему ID из базы данных.
-     * <p>null - пользователя нет в базе данных.</p>
-     */
-    @Override
-    public Integer idFromDBByID(Long id) {
-        return null;
-    }
-
-    /**
      * Проверка наличия пользователя по `Email`.
      * @param newEmail адрес эл. почты нового пользователя.
      * @return ID пользователя с Email, если он есть в БД.
