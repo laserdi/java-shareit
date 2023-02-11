@@ -1,4 +1,4 @@
-package ru.practicum.shareit.user;
+package ru.practicum.shareit.user.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,9 +13,6 @@ import ru.practicum.shareit.validation.UpdateObject;
 
 import java.util.List;
 
-/**
- * TODO Sprint add-controllers.
- */
 @RestController
 @RequestMapping("users")
 @Slf4j
@@ -24,7 +21,6 @@ import java.util.List;
 public class UserController {
     private final UserService service;
 
-
     /**
      * Добавить юзера в БД.
      * @param userDto пользователь.
@@ -32,9 +28,13 @@ public class UserController {
      */
     @PostMapping
     ResponseEntity<UserDto> addToStorage(@RequestBody @Validated(CreateObject.class) UserDto userDto) {
-        UserDto createdUser = service.addToStorage(userDto);
 
-        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
+        UserDto createdUser = service.addToStorage(userDto);
+        ResponseEntity<UserDto> response = new ResponseEntity<>(
+                createdUser, HttpStatus.CREATED);
+        String message = String.format("В БД добавлен новый пользователь:\t%s", response.getBody());
+        log.info(message);
+        return response;
     }
 
     /**
@@ -46,7 +46,10 @@ public class UserController {
     @PatchMapping("/{userId}")
     UserDto updateInStorage(@PathVariable long userId,
                             @Validated({UpdateObject.class}) @RequestBody UserDto userDto) {
-        return service.updateInStorage(userDto, userId);
+        userDto.setId(userId);
+        UserDto updatedUserDto = service.updateInStorage(userDto);
+        log.info("Выполнено обновление пользователя в БД.");
+        return updatedUserDto;
     }
 
     /**
@@ -55,7 +58,9 @@ public class UserController {
      */
     @DeleteMapping("/{userId}")
     ResponseEntity<String> removeFromStorage(@PathVariable Long userId) {
-        String message = service.removeFromStorage(userId);
+        service.removeFromStorage(userId);
+        String message = String.format("Выполнено удаление пользователя с ID = %d.", userId);
+        log.info(message);
         return new ResponseEntity<>(message, HttpStatus.OK);
     }
 
@@ -66,7 +71,10 @@ public class UserController {
     @GetMapping
     ResponseEntity<List<UserDto>> getAllUsersFromStorage() {
         List<UserDto> allUsersDto = service.getAllUsers();
-        return new ResponseEntity<>(allUsersDto, HttpStatus.OK);
+
+        ResponseEntity<List<UserDto>> response = new ResponseEntity<>(allUsersDto, HttpStatus.OK);
+        log.info("Выдан список всех пользователей.");
+        return response;
     }
 
     /**
@@ -76,7 +84,7 @@ public class UserController {
      * <p>null - пользователя нет в библиотеке.</p>
      */
     @GetMapping("/{userId}")
-    public ResponseEntity<UserDto> getUserById(@PathVariable Long userId) {
-        return new ResponseEntity<>(service.getUserById(userId), HttpStatus.OK);
+    public UserDto getUserById(@PathVariable Long userId) {
+        return service.getUserById(userId);
     }
 }

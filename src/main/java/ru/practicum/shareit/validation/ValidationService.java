@@ -1,39 +1,38 @@
 package ru.practicum.shareit.validation;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.ConflictException;
 import ru.practicum.shareit.exception.NotFoundRecordInBD;
 import ru.practicum.shareit.exception.ValidateException;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.item.repository.ItemRepositoryInMemory;
+import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.repository.UserRepository;
+import ru.practicum.shareit.user.repository.UserRepositoryInMemory;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ValidationService {
-    private final ItemRepository itemRepository;
-    private final UserRepository userRepository;
+    private final ItemRepositoryInMemory itemRepositoryInMemory;
+    private final UserRepositoryInMemory userRepository;
 
-    @Autowired
-    public ValidationService(ItemRepository itemRepository, UserRepository userRepository) {
-        this.itemRepository = itemRepository;
-        this.userRepository = userRepository;
-    }
+    private final UserMapper userMapper;
 
     /**
      * Проверка пользователя на уникальность почты в БД при ОБНОВЛЕНИИ пользователя.
      * <p>Если почта принадлежит этому же пользователю, то всё хорошо.</p>
      * <p>Если почта принадлежит другому пользователю, то генерируется исключение.</p>
-     *
      * @param user пользователь.
      * @throws ValidateException генерируемое исключение.
      */
     public void checkUniqueEmailToUpdate(User user) {
         final Long inputId = user.getId();
         final String inputEmail = user.getEmail();
+        final String inputName = user.getName();
 
         if (inputId == null) {
             //обновление не возможно, поскольку нет ID.
@@ -53,16 +52,10 @@ public class ValidationService {
     }
 
 
-    /**
-     * Проверка пользователя на уникальность почты.
-     * <p>Если почта принадлежит этому же пользователю, то всё хорошо.</p>
-     * <p>Если почта принадлежит другому пользователю, то генерируется исключение.</p>
-     *
-     * @param user пользователь.
-     * @throws ConflictException генерируемое исключение.
-     */
-    public void checkUniqueEmailToCreate(User user) {
+    public void checkUniqueEmailToCreate(UserDto user) {
+        final Long inputId = user.getId();
         final String inputEmail = user.getEmail();
+
 
         Long idFromDbByEmail = userRepository.getUserIdByEmail(inputEmail);
         //Надо проверить уникальность почты.
@@ -76,12 +69,36 @@ public class ValidationService {
     }
 
     /**
-     * Проверка всех полей пользователя.
-     *
+     * Проверка пользователя на уникальность почты.
+     * <p>Если почта принадлежит этому же пользователю, то всё хорошо.</p>
+     * <p>Если почта принадлежит другому пользователю, то генерируется исключение.</p>
      * @param user пользователь.
      * @throws ValidateException генерируемое исключение.
      */
-    public void validateUserFields(User user) {
+    public void checkUniqueEmail(User user) throws ConflictException {
+        final String newEmail = user.getEmail();
+        final Long idFromDB = userRepository.getUserIdByEmail(newEmail);
+
+        if (idFromDB.equals(user.getId())) {
+            String message = "";
+            throw new NotFoundRecordInBD(message);
+        }
+
+
+        if (idFromDB != null && user.getId() != null && !idFromDB.equals(user.getId())) {
+            //Если ID из БД != ID входящего юзера, значит email принадлежит другому юзеру.
+            String message = String.format("Email = '%s' уже есть в БД.", newEmail);
+            log.info(message + "Email принадлежит пользователю: " + userRepository.getUserById(idFromDB) + ".");
+            throw new ConflictException(message);
+        }
+    }
+
+    /**
+     * Проверка всех полей пользователя.
+     * @param user пользователь.
+     * @throws ValidateException генерируемое исключение.
+     */
+    public void validateUserFields(UserDto user) {
         final String email = user.getEmail();
         if (email == null || email.isBlank()) {
             String error = "Email пользователя не может пустым.";
@@ -100,7 +117,6 @@ public class ValidationService {
     /**
      * Проверка полей пользователя.
      * <p>Если оба поля 'name' и 'email' равны null, то генерируется исключение.</p>
-     *
      * @return массив boolean. Если поле null, то False.
      * <p>Первый элемент - имя, второй - email.</p>
      */
@@ -120,18 +136,17 @@ public class ValidationService {
 
     /**
      * Проверка наличия юзера в БД.
-     *
      * @param userId пользователя.
      * @throws NotFoundRecordInBD - пользователь не найден в БД.
      */
-    public User checkExistUserInDB(Long userId) {
+    public UserDto checkExistUserInDB(Long userId) {
         User result = userRepository.getUserById(userId);
         if (result == null) {
             String error = String.format("Error 404. Пользователь с ID = '%d' не найден в БД.", userId);
             log.info(error);
             throw new NotFoundRecordInBD(error);
         }
-        return result;
+        return userMapper.mapToDto(result);
 
     }
 
@@ -141,14 +156,13 @@ public class ValidationService {
 
     /**
      * Проверка наличия вещи в БД.
-     *
      * @param itemId ID вещи.
      * @return Null - вещь не найдена.
      * <p>Item -  вещь найдена.</p>
      * @throws NotFoundRecordInBD вещь не найдена в БД.
      */
     public Item checkExistItemInDB(Long itemId) {
-        Item item = itemRepository.getItemById(itemId);
+        Item item = itemRepositoryInMemory.getItemById(itemId);
         if (item == null) {
             String message = String.format("Вещь с ID = '%d' не найдена в БД.", itemId);
             log.info("Error 404. " + message);
@@ -159,12 +173,11 @@ public class ValidationService {
 
     /**
      * Проверка отсутствия вещи в БД.
-     *
      * @param itemId ID вещи.
      * @throws ConflictException Если вещь есть в БД, то генерируется исключение.
      */
     public void checkMissingItemInDB(Long itemId) {
-        Item item = itemRepository.getItemById(itemId);
+        Item item = itemRepositoryInMemory.getItemById(itemId);
         if (item != null) {
             String message = String.format("Вещь с ID = '%d' найдена в БД. %s", itemId, item);
             log.info("Error 409. " + message);
@@ -174,7 +187,6 @@ public class ValidationService {
 
     /**
      * Проверка всех полей вещей.
-     *
      * @param item вещь.
      * @throws ValidateException генерируемое исключение.
      */
@@ -198,7 +210,7 @@ public class ValidationService {
             log.info(error);
             throw new ValidateException(error);
         }
-        final Long ownerId = item.getOwnerId();
+        final Long ownerId = item.getOwner().getId();
         if (ownerId == null) {
             String error = "Для вещи необходим хозяин.";
             log.info(error);
@@ -210,7 +222,6 @@ public class ValidationService {
     /**
      * Проверка полей пользователя.
      * <p>Если оба поля 'name' и 'email' равны null, то генерируется исключение.</p>
-     *
      * @return массив boolean. Если поле null, то False.
      * <p>Первый элемент - name, второй - description, третий - ownerId, четвёртый - available,</p>
      * <p>пятый - isRequest, шестой - отзывы.</p>
@@ -223,7 +234,7 @@ public class ValidationService {
         result[2] = item.getAvailable() != null;
 
         for (boolean b : result) {
-            if (b) return result;
+            return result;
         }
         throw new ValidateException("Все поля: название, описание и статус доступа к аренде равны 'null'.");
     }
@@ -231,7 +242,6 @@ public class ValidationService {
 
     /**
      * Проверка: принадлежит ли вещь её хозяину.
-     *
      * @return True - вещь принадлежит хозяину.
      * <p>False - вещь не принадлежит хозяину.</p>
      * @throws ValidateException Если вещь и (или) ID хозяина = null.
@@ -242,11 +252,11 @@ public class ValidationService {
             log.info("Error 400. {}", message);
             throw new ValidateException(message);
         }
-        if (!ownerId.equals(item.getOwnerId())) {
-            String message = String.format("Вещь %s не принадлежит хозяину с ID = %d.", item.getName(), ownerId);
+        if (!ownerId.equals(item.getOwner().getId())) {
+            String message = String.format("Вещь %s не принадлежит хозяину с ID = %s.", item.getName(), ownerId);
             log.info("Error 404. {}", message);
             throw new NotFoundRecordInBD(message);
         }
-        return (ownerId.equals(item.getOwnerId()));
+        return (ownerId.equals(item.getOwner().getId()));
     }
 }
