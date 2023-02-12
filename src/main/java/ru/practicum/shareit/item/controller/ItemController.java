@@ -19,7 +19,6 @@ import java.util.List;
 @Slf4j
 public class ItemController {
     private final ItemService itemService;
-    private static int count = 0;
 
 
     @GetMapping("/{itemId}")
@@ -53,7 +52,7 @@ public class ItemController {
     @PatchMapping("{itemId}")
     public ItemDto update(@RequestHeader(value = "X-Sharer-User-Id", required = false) Long ownerId,
                           @PathVariable Long itemId, @Validated @RequestBody ItemDto itemDto) {
-        System.out.println(++count + " - Обновление вещи с ID = " + itemId + " юзера с ID = " + ownerId + ".");
+        System.out.println(" - Обновление вещи с ID = " + itemId + " юзера с ID = " + ownerId + ".");
         return itemService.updateInStorage(itemId, itemDto, ownerId);
     }
 
