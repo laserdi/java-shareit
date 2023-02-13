@@ -84,15 +84,15 @@ public class BookingServiceImpl implements BookingService {
         User ownerFromDb = userRepositoryJpa.findById(ownerId).orElseThrow(() -> new NotFoundRecordInBD("При " +
                 "обновлении бронирования не найден пользователь с ID = '" + ownerId + "' в БД."));
         List<Item> items = ownerFromDb.getItems();
-        System.out.println(items);
         //Если у хозяина есть вещи с ID = id вещи из переданного метода.
-        for (Item i : ownerFromDb.getItems()) {
-            if (i.getId().equals(bookingFromBd.getItem().getId())) {
+        for (Item i : items) {
+            Long itemIdFromBookingBd = bookingFromBd.getItem().getId();
+            //Если нашлась вещь, ID которой такая-то, то вернуть пользователю бронь на неё.
+            if (i.getId().equals(itemIdFromBookingBd)) {
                 bookingFromBd.setBookingStatus(approved ? BookingStatus.APPROVED : BookingStatus.REJECTED);
                 Booking result = bookingRepositoryJpa.save(bookingFromBd);
                 return bookingForResponseMapper.mapToDto(result);
             }
-
         }
         String message = "При обновлении брони у хозяина вещи эта вещь не найдена. Ошибка в запросе.";
         log.info(message);
@@ -111,7 +111,9 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepositoryJpa.findById(bookingId)
                 .orElseThrow(() -> new NotFoundRecordInBD("Бронирование с ID = '" + bookingId
                         + "не найдено в БД при его получении."));
-        if (userId.equals(booking.getBooker().getId()) || userId.equals(booking.getItem().getOwner().getId())) {
+        Long bookerId = booking.getBooker().getId();            //ID пользователя, забронировавшего вещь.
+        Long ownerId = booking.getItem().getOwner().getId();    //ID хозяина вещи в бронировании.
+        if (userId.equals(bookerId) || userId.equals(ownerId)) {
             return bookingForResponseMapper.mapToDto(booking);
         }
         throw new NotFoundRecordInBD("Ошибка при получении брони с ID = '" + bookingId
@@ -148,11 +150,11 @@ public class BookingServiceImpl implements BookingService {
 
         switch (bookingState) {
             case ALL: {
-                result = bookingRepositoryJpa.findAllByBookerOrderByStartTimeDesc(bookerFromDb);
+                result = bookingRepositoryJpa.findAllBookingsByBooker(bookerFromDb);
                 break;
             }
             case CURRENT: {
-                result = bookingRepositoryJpa.findAllByBookerAndStartTimeBeforeAndEndTimeAfterOrderByStartTimeDesc(
+                result = bookingRepositoryJpa.findAllBookingsForBookerWithStartAndEndTime(
                         bookerFromDb, nowDateTime, nowDateTime);
                 break;
             }
@@ -213,11 +215,10 @@ public class BookingServiceImpl implements BookingService {
         switch (bookingState) {
             case ALL: {
                 result = bookingRepositoryJpa.findAllByItem_OwnerOrderByStartTimeDesc(bookerFromDb);
-                System.out.println(result);
                 break;
             }
             case CURRENT: {
-                result = bookingRepositoryJpa.findAllByItem_OwnerAndStartTimeIsBeforeAndEndTimeIsAfterOrderByStartTimeDesc(
+                result = bookingRepositoryJpa.findAllBookingsItemByForOwnerWithStartAndEndTime(
                         bookerFromDb, nowDateTime, nowDateTime);
                 break;
             }
@@ -245,10 +246,8 @@ public class BookingServiceImpl implements BookingService {
                 throw new UnsupportedStatusException("Unknown state: UNSUPPORTED_STATUS");
             }
         }
-        List<BookingForResponse> bookingsForResponse = result.stream()
+        return result.stream()
                 .map(bookingForResponseMapper::mapToDto).collect(Collectors.toList());
-        System.out.println(bookingsForResponse);
-        return bookingsForResponse;
     }
 
     /**
@@ -287,7 +286,7 @@ public class BookingServiceImpl implements BookingService {
                 if (!(b.getEndTime().isBefore(bookingDto.getStartTime()) ||
                         b.getStartTime().isAfter(bookingDto.getStartTime()))) {
                     String message = "Найдено пересечение броней на эту вещь с name = " + item.getName() + ".";
-                    log.debug(message);
+                    log.info(message);
                     throw new ValidateException(message);
                 }
             }

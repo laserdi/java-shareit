@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import ru.practicum.shareit.booking.model.BookingStatus;
-import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.dto.UserForResponseDto;
 import ru.practicum.shareit.validation.CreateObject;
 
 import javax.validation.constraints.NotNull;
@@ -24,7 +24,7 @@ public class BookingDto {
     @NotNull(groups = {CreateObject.class}, message = "При создании брони должна быть информация о вещи.")
     private Long itemId;              //ID вещи.
     //@NotNull(groups = {CreateObject.class}, message = "При создании брони должна быть информация о пользователе.")
-    private User booker;              //Арендатор вещи.
+    private UserForResponseDto booker;              //Арендатор вещи.
     @JsonAlias({"start"})
     private LocalDateTime startTime;  //Дата начала бронирования.
     @JsonAlias({"end"})

@@ -56,7 +56,8 @@ public class ItemServiceImpl implements ItemService {
         User ownerFromDB = userRepository.findById(ownerId)
                 .orElseThrow(() -> new NotFoundRecordInBD("Ошибка при обновлении вещи с ID = " + itemId
                         + " пользователя с ID = " + ownerId + " в БД. В БД отсутствует запись о пользователе."));
-        if (itemFromDB.getOwner().getId().equals(ownerFromDB.getId())) {
+        Long ownerIdFromDb = itemFromDB.getOwner().getId();     //ID хозяина вещи из БД.
+        if (ownerIdFromDb.equals(ownerFromDB.getId())) {
             if (itemDto.getName() != null) {
                 itemFromDB.setName(itemDto.getName());
             }
@@ -157,9 +158,8 @@ public class ItemServiceImpl implements ItemService {
             return new ArrayList<>();
         }
         List<Item> resultItems = itemRepositoryJpa.searchItemsByText(text);
-        List<ItemDto> result = resultItems.stream().map(itemMapper::mapToDto)
+        return resultItems.stream().map(itemMapper::mapToDto)
                 .filter(ItemDto::getAvailable).collect(Collectors.toList());
-        return result;
     }
 
     /**
@@ -182,7 +182,8 @@ public class ItemServiceImpl implements ItemService {
         Booking nextBooking = null;
         LocalDateTime now = LocalDateTime.now();
 
-        if (itemFromBd.getOwner().getId().equals(ownerId) && allBookings != null) {
+        Long ownerIdForItemFromBd = itemFromBd.getOwner().getId();      //ID хозяина вещи из БД.
+        if (ownerIdForItemFromBd.equals(ownerId) && allBookings != null) {
             nextBooking = findNextBookingByDate(allBookings, now);
             lastBooking = findLastBookingByDate(allBookings, now);
         }
@@ -208,30 +209,30 @@ public class ItemServiceImpl implements ItemService {
         }
         User userFromBd = userRepository.findById(bookerId).orElseThrow(() ->
                 new NotFoundRecordInBD("Ошибка при сохранении комментария к вещи с ID = " + itemId
-                        + " пользователя с ID = " + bookerId + " в БД. В БД отсутствует запись о пользователе."));
+                        + " пользователем с ID = " + bookerId + " в БД. В БД отсутствует запись о пользователе."));
         Item itemFromBd = itemRepositoryJpa.findById(itemId).orElseThrow(() ->
                 new NotFoundRecordInBD("Ошибка при сохранении комментария к вещи с ID = " + itemId
-                        + " пользователя с ID = " + bookerId + " в БД. В БД отсутствует запись о вещи."));
+                        + " пользователем с ID = " + bookerId + " в БД. В БД отсутствует запись о вещи."));
         List<Booking> bookings = itemFromBd.getBookings();
+
         boolean isBooker = false;
         for (Booking b : bookings) {
-            if (b.getBooker().getId().equals(bookerId) && b.getEndTime().isBefore(LocalDateTime.now())) {
+            Long bookerIdFromBooking = b.getBooker().getId();
+            if (bookerIdFromBooking.equals(bookerId) && b.getEndTime().isBefore(LocalDateTime.now())) {
                 isBooker = true;
                 break;
             }
         }
         if (!isBooker) {
             throw new ValidateException("Ошибка при сохранении комментария к вещи с ID = " + itemId
-                    + " пользователя с ID = " + bookerId + " в БД. Пользователь не арендовал эту вещь.");
+                    + " пользователем с ID = " + bookerId + " в БД. Пользователь не арендовал эту вещь.");
         }
         Comment commentForSave = commentDtoMapper.mapToModel(commentDto);
         commentForSave.setItem(itemFromBd);
         commentForSave.setAuthor(userFromBd);
         commentForSave.setCreatedDate(LocalDateTime.now());
-        CommentDto result = commentDtoMapper.mapToDto(commentRepository.save(commentForSave));
-        return result;
+        return commentDtoMapper.mapToDto(commentRepository.save(commentForSave));
     }
-
 
     /**
      * Метод поиска первой аренды после указанной даты.

@@ -15,7 +15,9 @@ public interface BookingRepositoryJpa extends JpaRepository<Booking, Long> {
      * @param user пользователь, создавший бронирования.
      * @return список бронирований.
      */
-    List<Booking> findAllByBookerOrderByStartTimeDesc(User user);
+    @Query("select b from Booking b where b.booker = ?1 order by b.startTime DESC")
+//    List<Booking> findAllByBookerOrderByStartTimeDesc(User user);     //Или так.
+    List<Booking> findAllBookingsByBooker(User user);
 
 
     /**
@@ -26,7 +28,11 @@ public interface BookingRepositoryJpa extends JpaRepository<Booking, Long> {
      * @param dateTime2 Момент времени, после которого должна закончиться аренда.
      * @return список бронирований.
      */
-    List<Booking> findAllByBookerAndStartTimeBeforeAndEndTimeAfterOrderByStartTimeDesc(
+    @Query("select b from Booking b " +
+            "where b.booker = ?1 and b.startTime < ?2 and b.endTime > ?3 " +
+            "order by b.startTime DESC")
+//    List<Booking> findAllByBookerAndStartTimeBeforeAndEndTimeAfterOrderByStartTimeDesc(   //Или так
+    List<Booking> findAllBookingsForBookerWithStartAndEndTime(
             User user, LocalDateTime dateTime1, LocalDateTime dateTime2);
 
     /**
@@ -37,7 +43,11 @@ public interface BookingRepositoryJpa extends JpaRepository<Booking, Long> {
      * @param dateTime2 Момент времени, после которого должна закончиться аренда.
      * @return список бронирований.
      */
-    List<Booking> findAllByItem_OwnerAndStartTimeIsBeforeAndEndTimeIsAfterOrderByStartTimeDesc(
+    @Query("select b from Booking b " +
+            "where b.item.owner = ?1 and b.startTime < ?2 and b.endTime > ?3 " +
+            "order by b.startTime DESC")
+//    List<Booking> findAllByItem_OwnerAndStartTimeIsBeforeAndEndTimeIsAfterOrderByStartTimeDesc(
+    List<Booking> findAllBookingsItemByForOwnerWithStartAndEndTime(
             User user, LocalDateTime dateTime1, LocalDateTime dateTime2);
 
     /**

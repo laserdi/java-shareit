@@ -11,7 +11,6 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-//@ToString
 @RequiredArgsConstructor
 @AllArgsConstructor
 @Table(name = "items", schema = "public")

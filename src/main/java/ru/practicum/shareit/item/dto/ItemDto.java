@@ -1,10 +1,10 @@
 package ru.practicum.shareit.item.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@ToString
 @RequiredArgsConstructor
 @AllArgsConstructor
 public class ItemDto {

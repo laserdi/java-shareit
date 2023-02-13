@@ -48,7 +48,7 @@ public class UserController {
                             @Validated({UpdateObject.class}) @RequestBody UserDto userDto) {
         userDto.setId(userId);
         UserDto updatedUserDto = service.updateInStorage(userDto);
-        log.info("Выполнено обновление пользователя в БД.");
+        log.info("Выполнено обновление пользователя в БД.\t{}}", updatedUserDto);
         return updatedUserDto;
     }
 
