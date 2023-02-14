@@ -1,9 +1,9 @@
 package ru.practicum.shareit.user.service;
 
-
 import ru.practicum.shareit.exception.NotFoundRecordInBD;
 import ru.practicum.shareit.exception.ValidateException;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
 
@@ -26,25 +26,64 @@ public interface UserService {
 
     /**
      * Добавить юзера в БД.
-     * @param userDto пользователь.
+     * @param user пользователь.
      * @return добавляемый пользователь.
      */
-    UserDto addToStorage(UserDto userDto) throws ValidateException, NotFoundRecordInBD;
+    UserDto addToStorage(UserDto user) throws ValidateException, NotFoundRecordInBD;
 
     /**
      * Обновить юзера в БД.
-     * @param userDto пользователь
-     * @param userId  ID обновляемого юзера.
+     * @param user пользователь
      * @return обновлённый пользователь.
      */
-    UserDto updateInStorage(UserDto userDto, Long userId);
+    UserDto updateInStorage(UserDto user);
 
     /**
      * Удалить пользователя из БД.
      * @param id ID удаляемого пользователя
      * @throws NotFoundRecordInBD из метода validationService.checkExistUserInDB(id).
      */
-    String removeFromStorage(Long id);
+    void removeFromStorage(Long id);
+
+
+    /**
+     * Добавить пользователей с ID1 и ID2 в друзья.
+     * @param id1 пользователь №1;
+     * @param id2 пользователь №2.
+     */
+    void addEachOtherAsFriends(Long id1, Long id2);
+
+    /**
+     * Удалить пользователей из друзей.
+     * @param id1 пользователь №1.
+     * @param id2 пользователь №2.
+     */
+    void deleteFromFriends(Long id1, Long id2);
+
+
+    /**
+     * Вывести список общих друзей.
+     * @param id1 пользователь №1
+     * @param id2 пользователь №2
+     * @return список общих друзей.
+     */
+    List<User> getCommonFriends(Long id1, Long id2);
+
+    /**
+     * Вывести список друзей пользователя с ID.
+     * @param id ID пользователя.
+     * @return список друзей.
+     */
+    List<User> getUserFriends(Long id);
+
+    /**
+     * Метод проверки наличия пользователя в базе данных по ID.
+     * @param id пользователь, наличие логина которого необходимо проверить в базе данных.
+     * @return ID, найденный в БД по логину. Если возвращается не null, то после этой проверки можно обновлять
+     * пользователя, присвоив ему ID из базы данных.
+     * <p>null - пользователя нет в базе данных.</p>
+     */
+    Integer idFromDBByID(Long id);
 
     /**
      * Проверка наличия пользователя по `Email`.

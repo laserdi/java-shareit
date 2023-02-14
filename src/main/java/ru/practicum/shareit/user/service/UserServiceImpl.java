@@ -1,52 +1,41 @@
 package ru.practicum.shareit.user.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.NotFoundRecordInBD;
 import ru.practicum.shareit.exception.ValidateException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.repository.UserRepository;
-import ru.practicum.shareit.validation.ValidationService;
+import ru.practicum.shareit.user.repository.UserRepositoryJpa;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-
-    private final UserRepository userRepository;
-    private final ValidationService validationService;
     private final UserMapper mapper;
-
-    public UserServiceImpl(@Qualifier("InMemory") UserRepository userRepository,
-                           ValidationService validationService, UserMapper mapper) {
-        this.userRepository = userRepository;
-        this.validationService = validationService;
-        this.mapper = mapper;
-    }
+    private final UserRepositoryJpa userRepository;
 
     /**
      * Получить пользователя по ID.
      * @param id ID пользователя.
-     * @return UserDto - пользователь присутствует в библиотеке.
+     * @return User - пользователь присутствует в библиотеке.
      * <p>null - пользователя нет в библиотеке.</p>
      */
     @Override
     public UserDto getUserById(Long id) {
-        User result = userRepository.getUserById(id);
-        if (result == null) {
+        Optional<User> result = userRepository.findById(id);
+        if (result.isEmpty()) {
             String error = "В БД отсутствует запись о пользователе при получении пользователя по ID = " + id + ".";
             log.info(error);
             throw new NotFoundRecordInBD(error);
         }
-        String message = String.format("Выдан ответ на запрос пользователя по ID = %d:\t%s", id, result);
-        log.info(message);
-
-        return mapper.mapToDto(result);
+        return mapper.mapToDto(result.get());
     }
 
     /**
@@ -55,11 +44,8 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public List<UserDto> getAllUsers() {
-        List<UserDto> allUsersDto = new ArrayList<>();
-        List<User> allUsers = userRepository.getAllUsersFromStorage();
-        allUsers.stream().map(mapper::mapToDto).forEach(allUsersDto::add);
-        log.info("Выдан список всех пользователей.");
-        return allUsersDto;
+        return userRepository.findAll().stream()
+                .map(mapper::mapToDto).collect(Collectors.toList());
     }
 
     /**
@@ -70,33 +56,30 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto addToStorage(UserDto userDto) throws ValidateException, NotFoundRecordInBD {
         User user = mapper.mapToModel(userDto);
-
-        validationService.validateUserFields(user);
-        validationService.checkUniqueEmailToCreate(user);
-        UserDto createdUser = mapper.mapToDto(userRepository.addToStorage(user));
-        String message = String.format("В БД добавлен новый пользователь:\t%s", createdUser);
-        log.info(message);
-        return createdUser;
+        return mapper.mapToDto(userRepository.save(user));
     }
 
     /**
      * Обновить юзера в БД.
      * @param userDto пользователь
-     * @param userId  ID обновляемого юзера.
      * @return обновлённый пользователь.
      */
     @Override
-    public UserDto updateInStorage(UserDto userDto, Long userId) {
-
-        userDto.setId(userId);
-        User user = mapper.mapToModel(userDto);
-        validationService.checkExistUserInDB(user.getId());
-        boolean[] isUpdateFields = validationService.checkFieldsForUpdate(user);
-        validationService.checkUniqueEmailToUpdate(user);
-
-        User updatedUser = userRepository.updateInStorage(user, isUpdateFields);
-        log.info("Выполнено обновление пользователя в БД.");
-        return mapper.mapToDto(updatedUser);
+    public UserDto updateInStorage(UserDto userDto) {
+        Optional<User> userForUpdate = userRepository.findById(userDto.getId());
+        if (userForUpdate.isPresent()) {
+            if (userDto.getName() != null) {
+                userForUpdate.get().setName(userDto.getName());
+            }
+            if (userDto.getEmail() != null) {
+                userForUpdate.get().setEmail(userDto.getEmail());
+            }
+            return mapper.mapToDto(userRepository.save(userForUpdate.get()));
+        } else {
+            String error = "Ошибка при обновлении пользователя в БД. В БД отсутствует запись о пользователе с ID = "
+                    + userDto.getId() + ".";
+            throw new NotFoundRecordInBD(error);
+        }
     }
 
     /**
@@ -105,12 +88,61 @@ public class UserServiceImpl implements UserService {
      * @throws NotFoundRecordInBD из метода validationService.checkExistUserInDB(id).
      */
     @Override
-    public String removeFromStorage(Long id) {
-        User deletedUser = validationService.checkExistUserInDB(id);
-        userRepository.removeFromStorage(id);
-        String message = String.format("Выполнено удаление пользователя с ID = %d. %s", id, deletedUser);
-        log.info(message);
-        return message;
+    public void removeFromStorage(Long id) {
+        userRepository.deleteById(id);
+    }
+
+    /**
+     * Добавить пользователей с ID1 и ID2 в друзья.
+     * @param id1 пользователь №1;
+     * @param id2 пользователь №2.
+     */
+    @Override
+    public void addEachOtherAsFriends(Long id1, Long id2) {
+
+    }
+
+    /**
+     * Удалить пользователей из друзей.
+     * @param id1 пользователь №1.
+     * @param id2 пользователь №2.
+     */
+    @Override
+    public void deleteFromFriends(Long id1, Long id2) {
+
+    }
+
+    /**
+     * Вывести список общих друзей.
+     * @param id1 пользователь №1
+     * @param id2 пользователь №2
+     * @return список общих друзей.
+     */
+    @Override
+    public List<User> getCommonFriends(Long id1, Long id2) {
+        return null;
+    }
+
+    /**
+     * Вывести список друзей пользователя с ID.
+     * @param id ID пользователя.
+     * @return список друзей.
+     */
+    @Override
+    public List<User> getUserFriends(Long id) {
+        return null;
+    }
+
+    /**
+     * Метод проверки наличия пользователя в базе данных по ID.
+     * @param id пользователь, наличие логина которого необходимо проверить в базе данных.
+     * @return ID, найденный в БД по логину. Если возвращается не null, то после этой проверки можно обновлять
+     * пользователя, присвоив ему ID из базы данных.
+     * <p>null - пользователя нет в базе данных.</p>
+     */
+    @Override
+    public Integer idFromDBByID(Long id) {
+        return null;
     }
 
     /**
@@ -121,8 +153,6 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public Long getUserIdByEmail(String newEmail) {
-        return userRepository.getUserIdByEmail(newEmail);
+        return null;
     }
-
-
 }

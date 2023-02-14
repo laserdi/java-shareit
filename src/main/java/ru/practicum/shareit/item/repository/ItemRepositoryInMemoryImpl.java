@@ -4,16 +4,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.item.model.Item;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
 @Qualifier("InMemory")
-public class ItemRepositoryImpl implements ItemRepository {
+public class ItemRepositoryInMemoryImpl implements ItemRepositoryInMemory {
 
-    private final Map<Long, Item> itemMap = new HashMap<>();
+    Map<Long, Item> itemMap = new HashMap<>();
     private Long count = 0L;
 
     /**
@@ -34,7 +32,7 @@ public class ItemRepositoryImpl implements ItemRepository {
      */
     @Override
     public List<Item> getAllItems(Long userId) {
-        return itemMap.values().stream().filter(i -> i.getOwnerId().equals(userId))
+        return itemMap.values().stream().filter(i -> i.getOwner().getId().equals(userId))
                 .collect(Collectors.toList());
     }
 
@@ -74,10 +72,10 @@ public class ItemRepositoryImpl implements ItemRepository {
     @Override
     public void removeItemsByUserId(Long userId) {
         List<Long> idForRemove = itemMap.values().stream()
-                .filter(item -> item.getOwnerId().equals(userId))
+                .filter(item -> item.getOwner().getId().equals(userId))
                 .map(Item::getId).collect(Collectors.toList());
 
-        idForRemove.forEach(itemMap::remove);
+        idForRemove.forEach(id -> itemMap.remove(id));
     }
 
     /**
