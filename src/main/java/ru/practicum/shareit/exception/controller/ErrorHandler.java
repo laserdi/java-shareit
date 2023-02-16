@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -52,6 +53,16 @@ public class ErrorHandler {
                 "\"message\":\"UNSUPPORTED_STATUS\"\n}";
         String message = ex.getMessage();
         log.error(error + " — " + message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<?> handleForMethodArgumentNotValidException(final MethodArgumentNotValidException ex) {
+        String error = "Error 400. Не правильное значение аргумента.";
+        String message = ex.getMessage();
+        log.error(error);
+        System.out.println(message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 }

@@ -1,6 +1,9 @@
 package ru.practicum.shareit.item.model;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.comment.model.Comment;
 import ru.practicum.shareit.user.model.User;
