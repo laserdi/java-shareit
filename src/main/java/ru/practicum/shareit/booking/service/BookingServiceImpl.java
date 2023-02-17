@@ -2,6 +2,9 @@ package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
@@ -131,9 +134,17 @@ public class BookingServiceImpl implements BookingService {
      * @param state  статус бронирования.
      */
     @Override
-    public List<BookingForResponse> getByUserId(Long userId, String state) {
+    public List<BookingForResponse> getByUserId(Long userId, String state, Integer from, Integer size) {
         final LocalDateTime nowDateTime = LocalDateTime.now();
+        if (from < 0) {
+            throw new ValidateException("Отрицательный параметр пагинации from = '" + from + ".");
+        }
+        if (size < 1) {
+            throw new ValidateException("Не верный параметр пагинации size = '" + size + "'.");
+        }
         BookingState bookingState;
+
+        Pageable pageable = PageRequest.of(from / size, size, Sort.by("startTime"));
 
         if (state.isBlank()) {
             bookingState = BookingState.ALL;
@@ -150,32 +161,32 @@ public class BookingServiceImpl implements BookingService {
 
         switch (bookingState) {
             case ALL: {
-                result = bookingRepositoryJpa.findAllBookingsByBooker(bookerFromDb);
+                result = bookingRepositoryJpa.findAllByBookerOrderByStartTimeDesc(bookerFromDb, pageable);
                 break;
             }
             case CURRENT: {
                 result = bookingRepositoryJpa.findAllBookingsForBookerWithStartAndEndTime(
-                        bookerFromDb, nowDateTime, nowDateTime);
+                        bookerFromDb, nowDateTime, nowDateTime, pageable);
                 break;
             }
             case PAST: {
                 result = bookingRepositoryJpa.findAllByBookerAndEndTimeIsBeforeOrderByStartTimeDesc(
-                        bookerFromDb, nowDateTime);
+                        bookerFromDb, nowDateTime, pageable);
                 break;
             }
             case FUTURE: {
                 result = bookingRepositoryJpa.findAllByBookerAndStartTimeIsAfterOrderByStartTimeDesc(
-                        bookerFromDb, nowDateTime);
+                        bookerFromDb, nowDateTime, pageable);
                 break;
             }
             case WAITING: {
                 result = bookingRepositoryJpa.findAllByBookerAndBookingStatusEqualsOrderByStartTimeDesc(
-                        bookerFromDb, BookingStatus.WAITING);
+                        bookerFromDb, BookingStatus.WAITING, pageable);
                 break;
             }
             case REJECTED: {
                 result = bookingRepositoryJpa.findAllByBookerAndBookingStatusEqualsOrderByStartTimeDesc(
-                        bookerFromDb, BookingStatus.REJECTED);
+                        bookerFromDb, BookingStatus.REJECTED, pageable);
                 break;
             }
             case UNKNOWN: {
@@ -199,10 +210,17 @@ public class BookingServiceImpl implements BookingService {
      * @return Бронирования должны возвращаться отсортированными по дате от более новых к более старым.
      */
     @Override
-    public List<BookingForResponse> getByOwnerId(Long userId, String state) {
+    public List<BookingForResponse> getByOwnerId(Long userId, String state, Integer from, Integer size) {
         final LocalDateTime nowDateTime = LocalDateTime.now();
         BookingState bookingState;
+        if (from < 0) {
+            throw new ValidateException("Отрицательный параметр пагинации from = '" + from + ".");
+        }
+        if (size < 1) {
+            throw new ValidateException("Не верный параметр пагинации size = '" + size + "'.");
+        }
 
+        Pageable pageable = PageRequest.of(from / size, size, Sort.by("startTime"));
         try {
             bookingState = BookingState.valueOf(state);
         } catch (IllegalArgumentException ex) {
@@ -214,32 +232,32 @@ public class BookingServiceImpl implements BookingService {
 
         switch (bookingState) {
             case ALL: {
-                result = bookingRepositoryJpa.findAllByItem_OwnerOrderByStartTimeDesc(bookerFromDb);
+                result = bookingRepositoryJpa.findAllByItem_OwnerOrderByStartTimeDesc(bookerFromDb, pageable);
                 break;
             }
             case CURRENT: {
                 result = bookingRepositoryJpa.findAllBookingsItemByForOwnerWithStartAndEndTime(
-                        bookerFromDb, nowDateTime, nowDateTime);
+                        bookerFromDb, nowDateTime, nowDateTime, pageable);
                 break;
             }
             case PAST: {
                 result = bookingRepositoryJpa.findAllByItem_OwnerAndEndTimeIsBeforeOrderByStartTimeDesc(
-                        bookerFromDb, nowDateTime);
+                        bookerFromDb, nowDateTime, pageable);
                 break;
             }
             case FUTURE: {
                 result = bookingRepositoryJpa.findAllByItem_OwnerAndStartTimeIsAfterOrderByStartTimeDesc(
-                        bookerFromDb, nowDateTime);
+                        bookerFromDb, nowDateTime, pageable);
                 break;
             }
             case WAITING: {
                 result = bookingRepositoryJpa.findAllByItem_OwnerAndBookingStatusEqualsOrderByStartTimeDesc(
-                        bookerFromDb, BookingStatus.WAITING);
+                        bookerFromDb, BookingStatus.WAITING, pageable);
                 break;
             }
             case REJECTED: {
                 result = bookingRepositoryJpa.findAllByItem_OwnerAndBookingStatusEqualsOrderByStartTimeDesc(
-                        bookerFromDb, BookingStatus.REJECTED);
+                        bookerFromDb, BookingStatus.REJECTED, pageable);
                 break;
             }
             case UNKNOWN: {

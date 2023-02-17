@@ -73,9 +73,11 @@ public class BookingController {
     @GetMapping
     List<BookingForResponse> getByUserId(@RequestHeader("X-Sharer-User-Id") Long userId,
                                          @RequestParam(value = "state",
-                                                 defaultValue = "ALL", required = false) String state) {
+                                                 defaultValue = "ALL", required = false) String state,
+                                         @RequestParam(name = "from", defaultValue = "0") Integer from,
+                                         @RequestParam(name = "size", defaultValue = "20") Integer size) {
         log.info("Получение списка всех бронирований текущего пользователя.");
-        return bookingService.getByUserId(userId, state);
+        return bookingService.getByUserId(userId, state, from, size);
     }
 
     /**
@@ -87,8 +89,10 @@ public class BookingController {
     @GetMapping("/owner")
     public List<BookingForResponse> getByOwnerId(@RequestHeader("X-Sharer-User-Id") Long userId,
                                                  @RequestParam(value = "state", defaultValue = "ALL",
-                                                         required = false) String state) {
+                                                         required = false) String state,
+                                                 @RequestParam(name = "from", defaultValue = "0") Integer from,
+                                                 @RequestParam(name = "size", defaultValue = "20") Integer size) {
         log.info("Получение списка бронирований для всех вещей текущего пользователя.");
-        return bookingService.getByOwnerId(userId, state);
+        return bookingService.getByOwnerId(userId, state, from, size);
     }
 }

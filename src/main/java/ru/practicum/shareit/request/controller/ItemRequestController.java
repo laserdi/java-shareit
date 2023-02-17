@@ -56,7 +56,7 @@ public class ItemRequestController {
     @GetMapping("/all")
     public List<ItemRequestDtoWithAnswers> getAllRequests(@RequestHeader("X-Sharer-User-Id") Long requesterId,
                                                @RequestParam(name = "from", defaultValue = "0") Integer from,
-                                               @RequestParam(name = "size", defaultValue = "5") Integer size) {
+                                               @RequestParam(name = "size", defaultValue = "20") Integer size) {
         log.info("Получение списка запросов, созданных другими пользователями кроме ID = '{}'.", requesterId);
         return itemRequestService.getAllRequestForSee(requesterId, from, size);
     }
@@ -65,10 +65,10 @@ public class ItemRequestController {
      * `GET /requests/{requestId}` — получить данные об одном конкретном запросе вместе с данными об ответах на него
      * в том же формате, что и в эндпоинте GET /requests. Посмотреть данные об отдельном запросе может любой пользователь.
      */
+    @GetMapping("{requestId}")
     public ItemRequestDtoWithAnswers getItemRequestById(@RequestHeader("X-Sharer-User-Id") Long userId,
                                                         @PathVariable Long requestId) {
         log.info("Получение запроса на вещь с определённым ID.");
         return itemRequestService.getItemRequestById(userId, requestId);
     }
-
 }

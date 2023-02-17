@@ -38,7 +38,7 @@ public interface BookingService {
      * FUTURE (англ. «будущие»), WAITING (англ. «ожидающие подтверждения»), REJECTED (англ. «отклонённые»).
      * Бронирования должны возвращаться отсортированными по дате от более новых к более старым.
      */
-    List<BookingForResponse> getByUserId(Long userId, String state);
+    List<BookingForResponse> getByUserId(Long userId, String state, Integer from, Integer size);
 
     /**
      * • Получение списка бронирований для всех вещей текущего пользователя.
@@ -48,6 +48,6 @@ public interface BookingService {
      *               FUTURE (англ. «будущие»), WAITING (англ. «ожидающие подтверждения»), REJECTED (англ. «отклонённые»).
      * @return Бронирования должны возвращаться отсортированными по дате от более новых к более старым.
      */
-    List<BookingForResponse> getByOwnerId(Long userId, String state);
+    List<BookingForResponse> getByOwnerId(Long userId, String state, Integer from, Integer size);
 }
 

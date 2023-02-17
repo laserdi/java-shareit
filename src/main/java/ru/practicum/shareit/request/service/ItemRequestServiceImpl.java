@@ -2,12 +2,11 @@ package ru.practicum.shareit.request.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.NotFoundRecordInBD;
 import ru.practicum.shareit.exception.ValidateException;
-import ru.practicum.shareit.item.repository.ItemRepositoryJpa;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.dto.ItemRequestDtoWithAnswers;
 import ru.practicum.shareit.request.mapper.ItemRequestDtoMapper;
@@ -25,7 +24,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class ItemRequestServiceImpl implements ItemRequestService {
-    private final ItemRepositoryJpa itemRepositoryJpa;
     private final UserRepositoryJpa userRepositoryJpa;
     private final ItemRequestRepository itemRequestRepository;
     private final ItemRequestDtoMapper itemRequestDtoMapper;
@@ -97,7 +95,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         User requester = userRepositoryJpa.findById(userId)
                 .orElseThrow(() -> new NotFoundRecordInBD("Произошла ошибка при выдаче списка всех запросов кроме запросов " +
                         "пользователя (ID = '" + userId + "'). Этот пользователь не найден в БД."));
-        Pageable pageable = PageRequest.of(from, size);
+        Pageable pageable = PageRequest.of(from / size, size);
         List<ItemRequest> itemRequests =
                 itemRequestRepository.getItemRequestByRequesterIdIsNotOrderByCreated(userId, pageable);
 
@@ -116,6 +114,17 @@ public class ItemRequestServiceImpl implements ItemRequestService {
      */
     @Override
     public ItemRequestDtoWithAnswers getItemRequestById(Long userId, Long requestId) {
-        return null;
+        User user = userRepositoryJpa.findById(userId)
+                .orElseThrow(() -> new NotFoundRecordInBD("При попытке выдачи запроса по ID в БД не найден " +
+                        "пользователь, сделавший запрос."));
+        if (requestId == null) {
+            String message = "При попытке выдачи запроса по ID передан не правильный ID, равный null.";
+            log.info(message);
+            throw new ValidateException(message);
+        }
+        ItemRequest result = itemRequestRepository.findById(requestId)
+                .orElseThrow(() -> new NotFoundRecordInBD("При попытке выдачи запроса по ID этот запрос не найден ."));
+        log.info("Выдан запрос по его ID = '" + requestId + "'.");
+        return itemRequestDtoWithAnswersMapper.mapToDto(result);
     }
 }
