@@ -15,15 +15,25 @@ import java.util.List;
 @Setter
 @RequiredArgsConstructor
 @AllArgsConstructor
+@Builder
 @Table(name = "users", schema = "public")
 public class User {
+    /**
+     * ID пользователя.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false, unique = true)
     private Long id;        //ID пользователя.
+    /**
+     * Имя пользователя.
+     */
     @Column(name = "name", nullable = false)
     @NotBlank
     private String name;    //Имя пользователя.
+    /**
+     * Электронная почта.
+     */
     @Column(name = "email", nullable = false)
     @NotBlank
     @Email

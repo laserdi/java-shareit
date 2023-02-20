@@ -15,6 +15,7 @@ import java.util.List;
 @ToString
 @RequiredArgsConstructor
 @AllArgsConstructor
+@Builder
 public class ItemRequestDto {
     private Long id;                //уникальный идентификатор запроса;
     @NotNull(groups = {CreateObject.class}, message = "Описание запроса вещи не может быть null.")
