@@ -10,9 +10,9 @@ import java.util.List;
 @Getter
 @Setter
 @RequiredArgsConstructor
-//@AllArgsConstructor
+@AllArgsConstructor
 @ToString
-//@Builder
+@Builder
 public class ItemWithBookingAndCommentsDto {
     private Long id;
     private String name;

@@ -14,14 +14,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingForResponse;
-import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.booking.service.BookingService;
-import ru.practicum.shareit.item.dto.ItemForResponseDto;
 import ru.practicum.shareit.item.mapper.ItemForResponseDtoMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dto.UserForResponseDto;
-import ru.practicum.shareit.user.dto.UserOnlyWithIdDto;
 import ru.practicum.shareit.user.mapper.UserToUserOnlyWithIdDtoMapper;
 import ru.practicum.shareit.user.model.User;
 
@@ -51,7 +48,7 @@ public class BookingControllerTest {
     /**
      * mapper
      */
-    @Spy
+    @Spy        //Для интерфейса используем Spy.
     ItemForResponseDtoMapper itemForResponseDtoMapper;
     /**
      * mapper
@@ -59,41 +56,20 @@ public class BookingControllerTest {
     @Spy
     UserToUserOnlyWithIdDtoMapper userOnlyWithIdDtoMapper;
     /**
-     * Бронирование №1.
-     */
-    Booking booking;
-    /**
      * DTO-объект для создания бронирования №1.
      */
     BookingDto bookingDtoForCreate;
     /**
-     * DTO-объект, возвращаемый после создания бронирования №1.
-     */
-    BookingForResponse bookingDto1ForResponse;
-    /**
-     * Хозяин №1вещи №1.
+     * Хозяин №1 вещи №1.
      */
     User owner1;
     /**
-     * Букер №1вещи №1.
+     * Букер №1 вещи №1.
      */
     User booker101;
     /**
-     * Букер №1 вещи №1.
+     * Вещь №1.
      */
-    UserOnlyWithIdDto bookerWithOnlyId;
-    /**
-     * Хозяин №1 вещи №1.
-     */
-    UserForResponseDto ownerForResponseDto1;
-    /**
-     * Брокер №1 вещи №1.
-     */
-    UserForResponseDto bookerForResponseDto;
-    /**
-     * DTO-вещь для создания бронирования.
-     */
-    ItemForResponseDto itemForResponseDto;
     Item item1;
     LocalDateTime now;
     LocalDateTime nowPlus10Hours;

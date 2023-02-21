@@ -12,7 +12,7 @@ import javax.validation.constraints.NotBlank;
 @ToString
 @RequiredArgsConstructor
 @AllArgsConstructor
-//@Builder
+@Builder
 public class UserDto {
     /**
      * ID пользователя.
