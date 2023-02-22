@@ -15,6 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode
 public class ItemRequestDtoWithAnswers {
     Long id;                //уникальный идентификатор запроса;
     @NotBlank(groups = {CreateObject.class}, message = "Описание запроса вещи не может быть пустым.")

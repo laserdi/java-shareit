@@ -184,15 +184,16 @@ public class ItemControllerTest {
                 .thenReturn(itemDto);
 
         mockMvc.perform(patch("/items/{itemId}", itemDto.getId())
-                .header("X-Sharer-User-Id", "1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(itemDto)))
+                        .header("X-Sharer-User-Id", "1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(itemDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(itemDto.getId()), Long.class))
                 .andExpect(jsonPath("$.description", is(itemDto.getDescription()), String.class))
                 .andExpect(jsonPath("$.requestId", is(itemDto.getRequestId()), Long.class))
                 .andExpect(jsonPath("$.name", is(itemDto.getName()), String.class));
     }
+
     /**
      * Обновить вещь в БД. Редактирование вещи. Эндпойнт PATCH /items/{itemId}.
      */

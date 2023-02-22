@@ -2,13 +2,16 @@ package ru.practicum.shareit.user.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.repository.UserRepositoryJpa;
 
+import javax.validation.ConstraintViolationException;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -16,14 +19,15 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+
 @Transactional
 @SpringBootTest(
-        properties = "db.name=test",
         webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class UserServiceTest {
 
     private final UserService userService;
+    private final UserRepositoryJpa userRepositoryJpa;
 
     UserDto userDto1;
     UserDto userDto2;
@@ -38,8 +42,6 @@ class UserServiceTest {
                 .name("name userDto2")
                 .email("userDto2@mans.gf")
                 .build();
-
-
     }
 
     @Test
@@ -86,9 +88,29 @@ class UserServiceTest {
 
         UserDto userDtoFromDb = userService.getUserById(id);
 
+        assertEquals(1, users.size());
         assertEquals(userDto1.getName(), userDtoFromDb.getName());
         assertEquals(userDto1.getEmail(), userDtoFromDb.getEmail());
     }
+
+    @Test
+    void addToStorage_whenEmailIsWrong_thenReturnException() {
+        userDto1.setEmail("wrong email");
+
+        final ConstraintViolationException exception = Assertions.assertThrows(
+                ConstraintViolationException.class,
+                () -> userService.addToStorage(userDto1));
+    }
+
+    @Test
+    void addToStorage_whenNameIsWrong_thenReturnException() {
+        userDto1.setName("");
+
+        final ConstraintViolationException exception = Assertions.assertThrows(
+                ConstraintViolationException.class,
+                () -> userService.addToStorage(userDto1));
+    }
+
 
     @Test
     void updateInStorage() {
@@ -100,12 +122,12 @@ class UserServiceTest {
                 .findFirst()
                 .map(UserDto::getId).orElse(null);
         assertNotNull(id);
-        assertEquals(id, createdUser);
+        assertEquals(id, createdUser.getId());
 
         UserDto userDtoFromDbBeforeUpdate = userService.getUserById(id);
 
         assertEquals(userDtoFromDbBeforeUpdate.getName(), userDto1.getName());
-        assertEquals(userDtoFromDbBeforeUpdate.getEmail(), userDto1.getName());
+        assertEquals(userDtoFromDbBeforeUpdate.getEmail(), userDto1.getEmail());
 
         userDto2.setId(createdUser.getId());
         userService.updateInStorage(userDto2);

@@ -143,8 +143,8 @@ public class ItemServiceImpl implements ItemService {
      * @param itemId ID удаляемой вещи.
      */
     @Override
-    public ItemDto removeItemById(Long itemId) {
-        return null;
+    public void removeItemById(Long itemId) {
+        itemRepositoryJpa.deleteById(itemId);
     }
 
     /**
