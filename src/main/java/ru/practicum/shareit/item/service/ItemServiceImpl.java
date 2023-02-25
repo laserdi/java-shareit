@@ -216,13 +216,17 @@ public class ItemServiceImpl implements ItemService {
         List<Booking> bookings = itemFromBd.getBookings();
 
         boolean isBooker = false;
-        for (Booking b : bookings) {
-            Long bookerIdFromBooking = b.getBooker().getId();
-            if (bookerIdFromBooking.equals(bookerId) && b.getEndTime().isBefore(LocalDateTime.now())) {
-                isBooker = true;
-                break;
+
+        if (bookings != null) {
+            for (Booking b : bookings) {
+                Long bookerIdFromBooking = b.getBooker().getId();
+                if (bookerIdFromBooking.equals(bookerId) && b.getEndTime().isBefore(LocalDateTime.now())) {
+                    isBooker = true;
+                    break;
+                }
             }
         }
+
         if (!isBooker) {
             throw new ValidateException("Ошибка при сохранении комментария к вещи с ID = " + itemId
                     + " пользователем с ID = " + bookerId + " в БД. Пользователь не арендовал эту вещь.");
@@ -231,7 +235,9 @@ public class ItemServiceImpl implements ItemService {
         commentForSave.setItem(itemFromBd);
         commentForSave.setAuthor(userFromBd);
         commentForSave.setCreatedDate(LocalDateTime.now());
-        return commentDtoMapper.mapToDto(commentRepository.save(commentForSave));
+        Comment resComment = commentRepository.save(commentForSave);
+        CommentDto result = commentDtoMapper.mapToDto(resComment);
+        return result;
     }
 
     /**
@@ -243,20 +249,16 @@ public class ItemServiceImpl implements ItemService {
     private Booking findNextBookingByDate(List<Booking> bookings, LocalDateTime now) {
         Booking first = null;
         if (bookings != null && !bookings.isEmpty()) {
-            for (Booking b : bookings) {
+            for (Booking b : bookings)
                 if (b.getStartTime().isAfter(now)) {
                     //Если результат равен null и начало после момента и статус равен (это или это)
                     if (first == null && (b.getBookingStatus().equals(BookingStatus.APPROVED)
-                            || b.getBookingStatus().equals(BookingStatus.WAITING))) {
+                            || b.getBookingStatus().equals(BookingStatus.WAITING)))
                         first = b;
                         //если first = null и
-                    } else if (first == null) {
-                        first = b;
-                    } else if (b.getStartTime().isBefore(first.getStartTime())) {
-                        first = b;
-                    }
+                    else if (first == null) first = b;
+                    else if (b.getStartTime().isBefore(first.getStartTime())) first = b;
                 }
-            }
         }
         return first;
     }
@@ -270,21 +272,17 @@ public class ItemServiceImpl implements ItemService {
     private Booking findLastBookingByDate(List<Booking> bookings, LocalDateTime now) {
         Booking last = null;
 
-        if (bookings != null && !bookings.isEmpty()) {
-            for (Booking b : bookings) {
-                if (b.getEndTime().isBefore(now)) {
-                    //Если результат равен null и конец до момента и статус равен approved (подтверждено).
-                    if (last == null && (b.getBookingStatus().equals(BookingStatus.APPROVED))) {
-                        last = b;
-                        //если last = null
-                    } else if (last == null) {
-                        last = b;
-                    } else if (b.getEndTime().isAfter(last.getEndTime())) {
-                        last = b;
-                    }
+        if (bookings != null && !bookings.isEmpty()) for (Booking b : bookings)
+            if (b.getEndTime().isBefore(now)) {
+                if (last == null && (b.getBookingStatus().equals(BookingStatus.APPROVED)))
+                    last = b;
+                    //если last = null
+                else if (last == null)
+                    last = b;
+                else if (b.getEndTime().isAfter(last.getEndTime())) {
+                    last = b;
                 }
             }
-        }
         return last;
     }
 }

@@ -299,7 +299,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         List<Booking> bookings = item.getBookings();
-        if (!bookings.isEmpty()) {
+        if (bookings != null && !bookings.isEmpty()) {
             for (Booking b : bookings) {
                 if (!(b.getEndTime().isBefore(bookingDto.getStartTime()) ||
                         b.getStartTime().isAfter(bookingDto.getStartTime()))) {

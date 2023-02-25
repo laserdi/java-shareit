@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @ToString
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class BookingDto {
 
     /**
