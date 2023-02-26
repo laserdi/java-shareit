@@ -242,7 +242,7 @@ class ItemRequestServiceTest {
     void getItemRequestById_whenRequestIdIsWrong_returnValidateException() {
         UserDto savedRequesterDto = userService.addToStorage(requesterDto101);
         ValidateException ex = assertThrows(ValidateException.class,
-                ()-> itemRequestService.getItemRequestById(savedRequesterDto.getId(), null));
+                () -> itemRequestService.getItemRequestById(savedRequesterDto.getId(), null));
         assertEquals("При попытке выдачи запроса по ID передан не правильный ID, равный null.",
                 ex.getMessage());
     }

@@ -473,21 +473,21 @@ class BookingServiceTest {
     @Test
     void getByOwnerId_whenBookingStateIsWrong_returnUnsupportedStatusException() {
         UnsupportedStatusException ex = assertThrows(UnsupportedStatusException.class,
-                        () -> bookingService.getByOwnerId(1L, "22151", 1, 2));
+                () -> bookingService.getByOwnerId(1L, "22151", 1, 2));
         assertEquals("Unknown state: UNSUPPORTED_STATUS", ex.getMessage());
     }
 
     @Test
     void getByOwnerId_whenFromPageableIsWrong_returnValidateException() {
         ValidateException ex = assertThrows(ValidateException.class,
-                        () -> bookingService.getByOwnerId(1L, "22151", -1, 2));
+                () -> bookingService.getByOwnerId(1L, "22151", -1, 2));
         assertEquals("Отрицательный параметр пагинации from = '-1'.", ex.getMessage());
     }
 
     @Test
     void getByOwnerId_whenSizePageableIsWrong_returnValidateException() {
         ValidateException ex = assertThrows(ValidateException.class,
-                        () -> bookingService.getByOwnerId(1L, "22151", 0, 0));
+                () -> bookingService.getByOwnerId(1L, "22151", 0, 0));
         assertEquals("Не верный параметр пагинации size = '0'.", ex.getMessage());
     }
 
@@ -499,7 +499,7 @@ class BookingServiceTest {
         when(userRepository.findById(any())).thenReturn(Optional.empty());
 
         NotFoundRecordInBD ex = assertThrows(NotFoundRecordInBD.class,
-                ()->bookingService.getByOwnerId(1L, "ALL", 0, 3));
+                () -> bookingService.getByOwnerId(1L, "ALL", 0, 3));
         assertEquals("При получении списка бронирований не найден хозяин с ID = 1 в БД.", ex.getMessage());
     }
 
