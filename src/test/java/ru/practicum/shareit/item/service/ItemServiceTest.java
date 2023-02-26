@@ -67,12 +67,12 @@ class ItemServiceTest {
     ItemRequest itemRequest1;
     ItemRequest itemRequest2;
     UserDto ownerDto1;
-    UserDto requesterDto101;
-    UserDto bookerDto;
-    UserDto userDtoForTest;
     User owner1;
+    UserDto requesterDto101;
     User requester101;
+    UserDto bookerDto;
     User booker;
+    UserDto userDtoForTest;
     User userForTest;
     LocalDateTime now;
     LocalDateTime nowPlus10min;
@@ -82,6 +82,7 @@ class ItemServiceTest {
     ItemRequestDto itemRequestDto1;
     Booking booking1;
     BookingDto bookingDto1;
+    CommentDto commentDto;
     /**
      * Запрос всех вещей из БД.
      */
@@ -98,35 +99,44 @@ class ItemServiceTest {
         nowPlus10hours = now.plusHours(10);
 
         ownerDto1 = UserDto.builder()
-                .name("name userDto1")
-                .email("userDto1@mans.gf")
+                .name("name ownerDto1")
+                .email("ownerDto1@mans.gf")
                 .build();
 
         owner1 = User.builder()
                 .id(ownerDto1.getId())
                 .name(ownerDto1.getName())
                 .email(ownerDto1.getEmail())
+                .comments(List.of())
+                .bookings(List.of())
+                .items(List.of())
                 .build();
 
         requesterDto101 = UserDto.builder()
-                .name("name userDto2")
-                .email("userDto2@mans.gf")
+                .name("name requesterDto101")
+                .email("requesterDto101@mans.gf")
                 .build();
 
         requester101 = User.builder()
                 .id(requesterDto101.getId())
                 .name(requesterDto101.getName())
                 .email(requesterDto101.getEmail())
+                .comments(List.of())
+                .bookings(List.of())
+                .items(List.of())
                 .build();
 
         userDtoForTest = UserDto.builder()
-                .name("name user for test")
-                .email("emaul@userForTest.zx")
+                .name("name userDtoForTest")
+                .email("userDtoForTest@userDtoForTest.zx")
                 .build();
 
         userForTest = User.builder()
                 .name(userDtoForTest.getName())
                 .email(userDtoForTest.getEmail())
+                .comments(List.of())
+                .bookings(List.of())
+                .items(List.of())
                 .build();
 
         bookerDto = UserDto.builder()
@@ -137,6 +147,9 @@ class ItemServiceTest {
         booker = User.builder()
                 .name(bookerDto.getName())
                 .email(bookerDto.getEmail())
+                .comments(new ArrayList<>())
+                .bookings(new ArrayList<>())
+                .items(new ArrayList<>())
                 .build();
 
         itemRequest1 = ItemRequest.builder()
@@ -165,6 +178,12 @@ class ItemServiceTest {
                 .requester(userForResponseMapper.mapToDto(requester101))
                 .created(now)
                 .build();
+
+        commentDto = CommentDto.builder()
+                .content("comment 1")
+                .authorName(userForTest.getName())
+                .build();
+
     }
 
     @AfterEach
@@ -176,7 +195,6 @@ class ItemServiceTest {
         UserDto savedOwnerDto1 = userService.addToStorage(ownerDto1);
 
         //Before save.
-        bookingService.getByOwnerId(savedOwnerDto1.getId(), "ALL", 0, 5);
         query =
                 em.createQuery("Select i from Item i", Item.class);
         List<Item> beforeSave = query.getResultList();
@@ -219,7 +237,7 @@ class ItemServiceTest {
     }
 
     @Test
-    void updateInStorage_whenModifidNameAndDescription_returnUpdatedItem() {
+    void updateInStorage_whenAllIsOk_returnItemFromDb() {
         UserDto savedOwnerDto1 = userService.addToStorage(ownerDto1);
         ItemDto savedItemDtoBeforeUpd = itemService.add(itemDto1, savedOwnerDto1.getId());
         List<ItemWithBookingAndCommentsDto> itemDtos = itemService.getItemsByUserId(savedOwnerDto1.getId());
@@ -231,15 +249,32 @@ class ItemServiceTest {
         assertEquals(savedItemDtoBeforeUpd.getRequestId(), itemDtos.get(0).getRequestId());
         assertEquals(savedItemDtoBeforeUpd.getAvailable(), itemDtos.get(0).getAvailable());
 
-        ItemDto updatedItem = savedItemDtoBeforeUpd.toBuilder().name("new name").description("new description").build();
+        ItemDto updatedItem = savedItemDtoBeforeUpd.toBuilder().name("new name")
+                .description("new description").requestId(55L).build();
         ItemDto savedUpdItem =
                 itemService.updateInStorage(savedItemDtoBeforeUpd.getId(), updatedItem, savedOwnerDto1.getId());
 
         assertNotEquals(savedItemDtoBeforeUpd.getName(), savedUpdItem.getName());
         assertNotEquals(savedItemDtoBeforeUpd.getDescription(), savedUpdItem.getDescription());
         assertEquals(savedItemDtoBeforeUpd.getId(), savedUpdItem.getId());
-        assertEquals(savedItemDtoBeforeUpd.getRequestId(), savedUpdItem.getRequestId());
+        assertEquals(55L, savedUpdItem.getRequestId());
         assertEquals(savedItemDtoBeforeUpd.getAvailable(), savedUpdItem.getAvailable());
+    }
+
+    @Test
+    void updateInStorage_whenUpdatedItemHasOtherUser_returnNotFoundRecordInBD() {
+        UserDto savedOwnerDto1 = userService.addToStorage(ownerDto1);
+        UserDto savedOwnerDto2 = userService.addToStorage(userDtoForTest);
+        ItemDto savedItemDtoBeforeUpd = itemService.add(itemDto1, savedOwnerDto2.getId());
+        List<ItemWithBookingAndCommentsDto> itemDtos = itemService.getItemsByUserId(savedOwnerDto1.getId());
+
+        assertEquals(0, itemDtos.size());
+
+        ItemDto updatedItem = savedItemDtoBeforeUpd.toBuilder().name("new name")
+                .description("new description").requestId(55L).build();
+        assertThrows(NotFoundRecordInBD.class,
+                () -> itemService.updateInStorage(savedItemDtoBeforeUpd.getId(),
+                        updatedItem, savedOwnerDto1.getId()));
     }
 
     @Test
@@ -258,8 +293,8 @@ class ItemServiceTest {
     @Test
     void getItemById_whenWrongUser_returnItemFromDb() {
         UserDto savedOwnerDto1 = userService.addToStorage(ownerDto1);
-        ItemDto savedItemDtoBeforeUpd = itemService.add(itemDto1, savedOwnerDto1.getId());
-        assertThrows(NotFoundRecordInBD.class, () -> itemService.getItemById(savedItemDtoBeforeUpd.getId() + 1));
+        ItemDto savedItemDto = itemService.add(itemDto1, savedOwnerDto1.getId());
+        assertThrows(NotFoundRecordInBD.class, () -> itemService.getItemById(savedItemDto.getId() + 1));
     }
 
     @Test
@@ -301,7 +336,66 @@ class ItemServiceTest {
     }
 
     @Test
+    void searchItemsByText_whenTextIsBlank() {
+        UserDto savedOwnerDto1 = userService.addToStorage(ownerDto1);
+        ItemDto savedItemDto01 = itemService.add(itemDto1, savedOwnerDto1.getId());
+
+        UserDto savedRequester = userService.addToStorage(requesterDto101);
+        ItemDto itemDto02 = itemDto1.toBuilder().name("new item").description("new description").build();
+
+        ItemDto savedItemDto02 = itemService.add(itemDto02, savedOwnerDto1.getId());
+
+        List<ItemDto> itemDtoList = itemService.searchItemsByText("");
+
+        assertNotNull(itemDtoList);
+        assertEquals(0, itemDtoList.size());
+    }
+
+    @Test
     void getItemWithBookingAndComment() {
+        UserDto savedBooker = userService.addToStorage(bookerDto);
+        booker.setId(savedBooker.getId());  //запись полученного ID.
+        bookerDto.setId(savedBooker.getId());  //запись полученного ID.
+        UserForResponseDto bookerForResponse = userForResponseMapper.mapToDto(booker);
+
+
+        UserDto savedOwnerDto1 = userService.addToStorage(ownerDto1);
+        owner1.setId(savedBooker.getId());     //запись полученного ID.
+        ownerDto1.setId(savedBooker.getId());  //запись полученного ID.
+
+        ItemDto savedItemDto01 = itemService.add(itemDto1, savedOwnerDto1.getId());
+        itemDto1.setId(savedItemDto01.getId()); //запись полученного ID.
+        item1.setId(savedItemDto01.getId()); //запись полученного ID.
+
+        bookingDto1 = BookingDto.builder()
+                .itemId(item1.getId())
+                .booker(bookerForResponse)
+                .startTime(now.plusSeconds(1)).endTime(now.plusSeconds(2))
+                .bookingStatus(BookingStatus.APPROVED)
+                .build();
+
+        BookingForResponse savedBookingForResponse = bookingService.createBooking(bookerDto.getId(), bookingDto1);
+
+        booking1 = Booking.builder().id(savedBookingForResponse.getId())
+                .item(item1)
+                .booker(booker)
+                .startTime(bookingDto1.getStartTime())
+                .endTime(bookingDto1.getEndTime())
+                .bookingStatus(bookingDto1.getBookingStatus())
+                .build();
+        assertDoesNotThrow(() -> Thread.sleep(1500));   //Чтобы бронь стала прошедшей.
+
+        Comment comment1 = Comment.builder().content("content commentary").item(item1).author(booker)
+                .createdDate(LocalDateTime.now()).build();
+        Comment savedComment1 = commentRepository.save(comment1);
+
+        ItemWithBookingAndCommentsDto result =
+                itemService.getItemWithBookingAndComment(item1.getId(), owner1.getId());
+
+        assertEquals(item1.getName(), result.getName());
+        assertEquals(item1.getDescription(), result.getDescription());
+        assertEquals(item1.getRequestId(), result.getRequestId());
+        assertEquals(item1.getAvailable(), result.getAvailable());
     }
 
     @Test
@@ -418,5 +512,29 @@ class ItemServiceTest {
         assertEquals(commentDto.getAuthorName(), outputCommentDto.getAuthorName());
         assertEquals(commentDto.getId(), outputCommentDto.getId());
         assertNotEquals(commentDto.getCreatedDate(), outputCommentDto.getCreatedDate());
+    }
+
+    @Test
+    void saveComment_whenContentIsBlank_thenReturnValidateException() {
+        CommentDto commentDto = CommentDto.builder()
+                .id(1L)
+                .content("")
+                .authorName("name user for test 2")
+                .createdDate(now.minusDays(5))
+                .build();
+
+        assertThrows(ValidateException.class, () -> itemService.saveComment(1L, 1L, commentDto));
+    }
+
+    @Test
+    void saveComment_whenUserNotFound_thenReturnNotFoundRecordInBD() {
+        CommentDto commentDto = CommentDto.builder()
+                .id(1L)
+                .content("comment 1")
+                .authorName("name user for test 2")
+                .createdDate(now.minusDays(5))
+                .build();
+
+        assertThrows(NotFoundRecordInBD.class, () -> itemService.saveComment(1000L, 1L, commentDto));
     }
 }

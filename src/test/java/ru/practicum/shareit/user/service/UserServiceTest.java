@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.exception.NotFoundRecordInBD;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.repository.UserRepositoryJpa;
 
@@ -16,8 +17,7 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 @Transactional
@@ -54,6 +54,14 @@ class UserServiceTest {
         assertNotNull(user.getId());
         assertEquals(user.getName(), userDto1.getName());
         assertEquals(user.getEmail(), userDto1.getEmail());
+    }
+
+    @Test
+    void getUserById_whenUserNotFoundInDb_return() {
+        UserDto savedUser = userService.addToStorage(userDto1);
+
+        assertThrows(NotFoundRecordInBD.class,
+                () -> userService.getUserById(9000L));
     }
 
     @SneakyThrows   //позволяет "бесшумно" выбрасывать проверяемые исключения, не объявляя их явно в условии throws.

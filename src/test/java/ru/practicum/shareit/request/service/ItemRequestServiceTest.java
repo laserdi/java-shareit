@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.exception.ValidateException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
@@ -119,6 +120,12 @@ class ItemRequestServiceTest {
         assertEquals(savedItemRequest.getCreated(), afterSave.get(0).getCreated());
         assertEquals(savedItemRequest.getDescription(), afterSave.get(0).getDescription());
         assertEquals(savedItemRequest.getItems(), afterSave.get(0).getItems());
+    }
+
+    @Test
+    void addItemRequest_whenRequesterIdIsNull_returnValidateException() {
+        assertThrows(ValidateException.class,
+                () -> itemRequestService.addItemRequest(null, itemRequestDto1));
     }
 
 

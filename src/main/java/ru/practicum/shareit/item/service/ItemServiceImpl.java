@@ -182,17 +182,21 @@ public class ItemServiceImpl implements ItemService {
         Booking nextBooking = null;
         LocalDateTime now = LocalDateTime.now();
 
+        ItemWithBookingAndCommentsDto itemWithBAndCDto = itemWithBAndCDtoMapper.mapToDto(itemFromBd);
+
         Long ownerIdForItemFromBd = itemFromBd.getOwner().getId();      //ID хозяина вещи из БД.
         if (ownerIdForItemFromBd.equals(ownerId) && allBookings != null) {
             nextBooking = findNextBookingByDate(allBookings, now);
             lastBooking = findLastBookingByDate(allBookings, now);
+            itemWithBAndCDto.setNextBooking(bookingForItemDtoMapper.mapToDto(nextBooking));
+            itemWithBAndCDto.setLastBooking(bookingForItemDtoMapper.mapToDto(lastBooking));
         }
-        ItemWithBookingAndCommentsDto itemWithBAndCDto = itemWithBAndCDtoMapper.mapToDto(itemFromBd);
-        itemWithBAndCDto.setNextBooking(bookingForItemDtoMapper.mapToDto(nextBooking));
-        itemWithBAndCDto.setLastBooking(bookingForItemDtoMapper.mapToDto(lastBooking));
+        List<CommentDto> commentDtoForResponse = null;
         List<Comment> commentsFromDb = itemFromBd.getComments();
-        List<CommentDto> commentDtoForResponse = commentsFromDb.stream()
-                .map(commentDtoMapper::mapToDto).collect(Collectors.toList());
+        if (commentsFromDb != null) {
+            commentDtoForResponse = commentsFromDb.stream()
+                    .map(commentDtoMapper::mapToDto).collect(Collectors.toList());
+        }
         itemWithBAndCDto.setFeedbacks(commentDtoForResponse);
         return itemWithBAndCDto;
     }

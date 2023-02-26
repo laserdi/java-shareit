@@ -16,6 +16,7 @@ import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.booking.repository.BookingRepositoryJpa;
 import ru.practicum.shareit.exception.NotFoundRecordInBD;
 import ru.practicum.shareit.exception.UnsupportedStatusException;
+import ru.practicum.shareit.exception.ValidateException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepositoryJpa;
 import ru.practicum.shareit.user.dto.UserForResponseDto;
@@ -29,8 +30,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @Transactional
 @SpringBootTest(
@@ -45,9 +45,6 @@ class BookingServiceTest {
     private final BookingMapper bookingMapper;
     private final BookingForResponseBookingDtoMapper bookingForResponseBookingDtoMapper;
     private final UserForResponseMapper userForResponseMapper;
-//    private ItemService itemService;
-//    private UserService userService;
-
     User user;
     UserForResponseDto userForResponse;
     User owner;
@@ -224,6 +221,13 @@ class BookingServiceTest {
     }
 
     @Test
+    void createBooking_whenItemNotFoundInDb_returnNotFoundRecordInBD() {
+        when(itemRepository.findById(any())).thenReturn(Optional.empty());
+        NotFoundRecordInBD ex = assertThrows(NotFoundRecordInBD.class,
+                () -> bookingService.createBooking(user.getId(), bookingDto));
+    }
+
+    @Test
     void updateBooking_whenAllIsOk_returnUpdateBooking() {
         owner.setItems(List.of(item));
         Booking updatedBooking = booking.toBuilder().bookingStatus(BookingStatus.APPROVED).build();
@@ -269,6 +273,16 @@ class BookingServiceTest {
                 booking.getId(), true));
     }
 
+    @Test
+    void updateBooking_whenBookingIsApproved_returnValidateException() {
+        booking.setBookingStatus(BookingStatus.APPROVED);
+        when(bookingRepositoryJpa.findById(any())).thenReturn(Optional.of(booking));
+        ValidateException ex =
+                assertThrows(ValidateException.class,
+                        () -> bookingService.updateBooking(1L, user.getId(), true));
+        assertEquals("Данное бронирование уже было обработано и имеет статус 'APPROVED'.", ex.getMessage());
+    }
+
     /**
      * • Получение данных о конкретном бронировании, включая его статус.
      * <p>Может быть выполнено либо автором бронирования, либо владельцем вещи.</p>
@@ -299,9 +313,11 @@ class BookingServiceTest {
 
 
     @Test
-    void updateBooking_whenUnknownState_returnUnsupportedStatusException() {
-        assertThrows(UnsupportedStatusException.class, () -> bookingService.getByUserId(user.getId(),
-                "yttdddgf", 0, 5));
+    void getByUserId_whenUnknownState_returnUnsupportedStatusException() {
+        UnsupportedStatusException ex =
+                assertThrows(UnsupportedStatusException.class, () -> bookingService.getByUserId(user.getId(),
+                        "yttdddgf", 0, 5));
+        assertEquals("Unknown state: UNSUPPORTED_STATUS", ex.getMessage());
     }
 
     @Test
@@ -385,8 +401,14 @@ class BookingServiceTest {
         assertEquals(rejectedBooking.getBookingStatus(), result.get(0).getStatus());
     }
 
+    /**
+     * • Получение списка бронирований для всех вещей текущего пользователя, то есть хозяина вещей.
+     */
     @Test
-    void getByOwnerId() {
-
+    void getByOwnerId_whenBookingStateIsWrong_returnIllegalArgumentException() {
+        UnsupportedStatusException ex =
+                assertThrows(UnsupportedStatusException.class,
+                        () -> bookingService.getByOwnerId(1L, "22151", 1, 2));
+        assertEquals("Unknown state: UNSUPPORTED_STATUS", ex.getMessage());
     }
 }
