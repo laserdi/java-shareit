@@ -185,7 +185,21 @@ class ItemRequestServiceTest {
     }
 
     @Test
-    void getItemRequestById() {
+    void getAllRequestForSee_whenFromPageableIsMinus_returnValidateException() {
+        ValidateException ex = assertThrows(ValidateException.class,
+                () -> itemRequestService.getAllRequestForSee(1L, -1, 5));
+        assertEquals("Отрицательный параметр пагинации from = '-1'.", ex.getMessage());
+    }
+
+    @Test
+    void getAllRequestForSee_whenSizePageableIsWrong_returnValidateException() {
+        ValidateException ex = assertThrows(ValidateException.class,
+                () -> itemRequestService.getAllRequestForSee(1L, 0, 0));
+        assertEquals("Не верный параметр пагинации size = '0'.", ex.getMessage());
+    }
+
+    @Test
+    void getItemRequestById_whenAllIsOk_returnItemRequestDtoWithAnswers() {
         UserDto savedRequesterDto = userService.addToStorage(requesterDto101);
         UserDto savedOwnerDto = userService.addToStorage(ownerDto1);
         UserDto observer = userService.addToStorage(UserDto.builder().name("nablyudatel").email("1@re.hg").build());
@@ -222,5 +236,14 @@ class ItemRequestServiceTest {
         assertEquals(savedItRequest.getDescription(), itReqDtoWithAnswerForRequester.getDescription());
         assertEquals(savedItRequest.getRequester().getId(), itReqDtoWithAnswerForRequester.getRequester().getId());
         assertEquals(savedItRequest.getRequester().getId(), itReqDtoWithAnswerForRequester.getRequester().getId());
+    }
+
+    @Test
+    void getItemRequestById_whenRequestIdIsWrong_returnValidateException() {
+        UserDto savedRequesterDto = userService.addToStorage(requesterDto101);
+        ValidateException ex = assertThrows(ValidateException.class,
+                ()-> itemRequestService.getItemRequestById(savedRequesterDto.getId(), null));
+        assertEquals("При попытке выдачи запроса по ID передан не правильный ID, равный null.",
+                ex.getMessage());
     }
 }

@@ -137,7 +137,7 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingForResponse> getByUserId(Long userId, String state, Integer from, Integer size) {
         final LocalDateTime nowDateTime = LocalDateTime.now();
         if (from < 0) {
-            throw new ValidateException("Отрицательный параметр пагинации from = '" + from + ".");
+            throw new ValidateException("Отрицательный параметр пагинации from = '" + from + "'.");
         }
         if (size < 1) {
             throw new ValidateException("Не верный параметр пагинации size = '" + size + "'.");
@@ -214,18 +214,22 @@ public class BookingServiceImpl implements BookingService {
         final LocalDateTime nowDateTime = LocalDateTime.now();
         BookingState bookingState;
         if (from < 0) {
-            throw new ValidateException("Отрицательный параметр пагинации from = '" + from + ".");
+            throw new ValidateException("Отрицательный параметр пагинации from = '" + from + "'.");
         }
         if (size < 1) {
             throw new ValidateException("Не верный параметр пагинации size = '" + size + "'.");
         }
-
-        Pageable pageable = PageRequest.of(from / size, size, Sort.by("startTime"));
-        try {
-            bookingState = BookingState.valueOf(state);
-        } catch (IllegalArgumentException ex) {
-            throw new UnsupportedStatusException("Unknown state: UNSUPPORTED_STATUS");
+        if (state.isBlank()) {
+            bookingState = BookingState.ALL;
+        } else {
+            try {
+                bookingState = BookingState.valueOf(state);
+            } catch (IllegalArgumentException ex) {
+                throw new UnsupportedStatusException("Unknown state: UNSUPPORTED_STATUS");
+            }
         }
+        Pageable pageable = PageRequest.of(from / size, size, Sort.by("startTime"));
+
         User bookerFromDb = userRepositoryJpa.findById(userId).orElseThrow(() -> new NotFoundRecordInBD("При " +
                 "получении списка бронирований не найден хозяин с ID = " + userId + " в БД."));
         List<Booking> result = new ArrayList<>();
@@ -236,13 +240,11 @@ public class BookingServiceImpl implements BookingService {
                 break;
             }
             case CURRENT: {
-                result = bookingRepositoryJpa.findAllBookingsItemByForOwnerWithStartAndEndTime(
-                        bookerFromDb, nowDateTime, nowDateTime, pageable);
+                result = bookingRepositoryJpa.findAllBookingsItemByForOwnerWithStartAndEndTime(bookerFromDb, nowDateTime, nowDateTime, pageable);
                 break;
             }
             case PAST: {
-                result = bookingRepositoryJpa.findAllByItem_OwnerAndEndTimeIsBeforeOrderByStartTimeDesc(
-                        bookerFromDb, nowDateTime, pageable);
+                result = bookingRepositoryJpa.findAllByItem_OwnerAndEndTimeIsBeforeOrderByStartTimeDesc(bookerFromDb, nowDateTime, pageable);
                 break;
             }
             case FUTURE: {
@@ -251,13 +253,11 @@ public class BookingServiceImpl implements BookingService {
                 break;
             }
             case WAITING: {
-                result = bookingRepositoryJpa.findAllByItem_OwnerAndBookingStatusEqualsOrderByStartTimeDesc(
-                        bookerFromDb, BookingStatus.WAITING, pageable);
+                result = bookingRepositoryJpa.findAllByItem_OwnerAndBookingStatusEqualsOrderByStartTimeDesc(bookerFromDb, BookingStatus.WAITING, pageable);
                 break;
             }
             case REJECTED: {
-                result = bookingRepositoryJpa.findAllByItem_OwnerAndBookingStatusEqualsOrderByStartTimeDesc(
-                        bookerFromDb, BookingStatus.REJECTED, pageable);
+                result = bookingRepositoryJpa.findAllByItem_OwnerAndBookingStatusEqualsOrderByStartTimeDesc(bookerFromDb, BookingStatus.REJECTED, pageable);
                 break;
             }
             case UNKNOWN: {

@@ -225,6 +225,17 @@ class BookingServiceTest {
         when(itemRepository.findById(any())).thenReturn(Optional.empty());
         NotFoundRecordInBD ex = assertThrows(NotFoundRecordInBD.class,
                 () -> bookingService.createBooking(user.getId(), bookingDto));
+        assertEquals(String.format("При создании бронирования не найдена вещь с ID = %s в БД.",
+                bookingDto.getItemId()), ex.getMessage());
+    }
+
+    @Test
+    void createBooking_whenItemAvailableIsFalse_returnValidateException() {
+        item.setAvailable(false);
+        when(itemRepository.findById(any())).thenReturn(Optional.of(item));
+        ValidateException ex = assertThrows(ValidateException.class,
+                () -> bookingService.createBooking(1L, bookingDto));
+        assertEquals("Вещь нельзя забронировать, поскольку available = false.", ex.getMessage());
     }
 
     @Test
@@ -337,6 +348,22 @@ class BookingServiceTest {
     }
 
     @Test
+    void getByUserId_whenStateIsBlank_returnAllBookings() {
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+        when(bookingRepositoryJpa.findAllByBookerOrderByStartTimeDesc(any(), any()))
+                .thenReturn(List.of(booking));
+        List<BookingForResponse> result = bookingService.getByUserId(user.getId(), "", 0, 5);
+
+        assertEquals(1, result.size());
+        assertEquals(booking.getId(), result.get(0).getId());
+        assertEquals(booking.getBooker().getId(), result.get(0).getBooker().getId());
+        assertEquals(booking.getItem().getName(), result.get(0).getItem().getName());
+        assertEquals(booking.getStartTime(), result.get(0).getStartTime());
+        assertEquals(booking.getEndTime(), result.get(0).getEndTime());
+        assertEquals(booking.getBookingStatus(), result.get(0).getStatus());
+    }
+
+    @Test
     void getByUserId_whenStateIsCurrent_returnAllCurrentBookings() {
         when(userRepository.findById(any())).thenReturn(Optional.of(user));
         when(bookingRepositoryJpa.findAllBookingsForBookerWithStartAndEndTime(any(), any(), any(), any()))
@@ -367,6 +394,23 @@ class BookingServiceTest {
         assertEquals(pastBooking.getStartTime(), result.get(0).getStartTime());
         assertEquals(pastBooking.getEndTime(), result.get(0).getEndTime());
         assertEquals(pastBooking.getBookingStatus(), result.get(0).getStatus());
+    }
+
+    @Test
+    void getByUserId_whenStateIsFuture_returnAllFutureBookings() {
+
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+        when(bookingRepositoryJpa.findAllByBookerAndStartTimeIsAfterOrderByStartTimeDesc(any(), any(), any()))
+                .thenReturn(List.of(futureBooking));
+        List<BookingForResponse> result = bookingService.getByUserId(user.getId(), "FUTURE", 0, 5);
+
+        assertEquals(1, result.size());
+        assertEquals(futureBooking.getId(), result.get(0).getId());
+        assertEquals(futureBooking.getBooker().getId(), result.get(0).getBooker().getId());
+        assertEquals(futureBooking.getItem().getName(), result.get(0).getItem().getName());
+        assertEquals(futureBooking.getStartTime(), result.get(0).getStartTime());
+        assertEquals(futureBooking.getEndTime(), result.get(0).getEndTime());
+        assertEquals(futureBooking.getBookingStatus(), result.get(0).getStatus());
     }
 
     @Test
@@ -401,14 +445,177 @@ class BookingServiceTest {
         assertEquals(rejectedBooking.getBookingStatus(), result.get(0).getStatus());
     }
 
+    @Test
+    void getByUserId_whenStateIsUnknown_returnUnsupportedStatusException() {
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+        UnsupportedStatusException ex = assertThrows(UnsupportedStatusException.class,
+                () -> bookingService.getByUserId(user.getId(), "UNKNOWN", 0, 5));
+        assertEquals("Unknown state: UNSUPPORTED_STATUS", ex.getMessage());
+    }
+
+    @Test
+    void getByUserId_whenFromPageableIsWrong_returnValidateException() {
+        ValidateException ex = assertThrows(ValidateException.class,
+                () -> bookingService.getByUserId(1L, "state", -1, 2));
+        assertEquals("Отрицательный параметр пагинации from = '-1'.", ex.getMessage());
+    }
+
+    @Test
+    void getByUserId_whenSizePageableIsWrong_returnValidateException() {
+        ValidateException ex = assertThrows(ValidateException.class,
+                () -> bookingService.getByUserId(1L, "state", 0, -1));
+        assertEquals("Не верный параметр пагинации size = '-1'.", ex.getMessage());
+    }
+
     /**
      * • Получение списка бронирований для всех вещей текущего пользователя, то есть хозяина вещей.
      */
     @Test
-    void getByOwnerId_whenBookingStateIsWrong_returnIllegalArgumentException() {
-        UnsupportedStatusException ex =
-                assertThrows(UnsupportedStatusException.class,
+    void getByOwnerId_whenBookingStateIsWrong_returnUnsupportedStatusException() {
+        UnsupportedStatusException ex = assertThrows(UnsupportedStatusException.class,
                         () -> bookingService.getByOwnerId(1L, "22151", 1, 2));
         assertEquals("Unknown state: UNSUPPORTED_STATUS", ex.getMessage());
+    }
+
+    @Test
+    void getByOwnerId_whenFromPageableIsWrong_returnValidateException() {
+        ValidateException ex = assertThrows(ValidateException.class,
+                        () -> bookingService.getByOwnerId(1L, "22151", -1, 2));
+        assertEquals("Отрицательный параметр пагинации from = '-1'.", ex.getMessage());
+    }
+
+    @Test
+    void getByOwnerId_whenSizePageableIsWrong_returnValidateException() {
+        ValidateException ex = assertThrows(ValidateException.class,
+                        () -> bookingService.getByOwnerId(1L, "22151", 0, 0));
+        assertEquals("Не верный параметр пагинации size = '0'.", ex.getMessage());
+    }
+
+    /**
+     * • Получение списка бронирований для всех вещей текущего пользователя, то есть хозяина вещей.
+     */
+    @Test
+    void getByOwnerId_whenUserNotFoundInDb_returnNotFoundRecordInBD() {
+        when(userRepository.findById(any())).thenReturn(Optional.empty());
+
+        NotFoundRecordInBD ex = assertThrows(NotFoundRecordInBD.class,
+                ()->bookingService.getByOwnerId(1L, "ALL", 0, 3));
+        assertEquals("При получении списка бронирований не найден хозяин с ID = 1 в БД.", ex.getMessage());
+    }
+
+    ////////////////////////////////////////
+    @Test
+    void getByOwnerId_whenStateIsAll_returnAllBookings() {
+        when(userRepository.findById(any())).thenReturn(Optional.of(owner));
+        when(bookingRepositoryJpa.findAllByItem_OwnerOrderByStartTimeDesc(any(), any()))
+                .thenReturn(List.of(booking));
+        List<BookingForResponse> result = bookingService.getByOwnerId(owner.getId(), "ALL", 0, 5);
+
+        assertEquals(1, result.size());
+        assertEquals(booking.getId(), result.get(0).getId());
+        assertEquals(booking.getBooker().getId(), result.get(0).getBooker().getId());
+        assertEquals(booking.getItem().getName(), result.get(0).getItem().getName());
+        assertEquals(booking.getStartTime(), result.get(0).getStartTime());
+        assertEquals(booking.getEndTime(), result.get(0).getEndTime());
+        assertEquals(booking.getBookingStatus(), result.get(0).getStatus());
+    }
+
+    @Test
+    void getByOwnerId_whenStateIsBlank_returnAllBookings() {
+        when(userRepository.findById(any())).thenReturn(Optional.of(owner));
+        when(bookingRepositoryJpa.findAllByItem_OwnerOrderByStartTimeDesc(any(), any()))
+                .thenReturn(List.of(booking));
+        List<BookingForResponse> result = bookingService.getByOwnerId(owner.getId(), "", 0, 5);
+
+        assertEquals(1, result.size());
+        assertEquals(booking.getId(), result.get(0).getId());
+        assertEquals(booking.getBooker().getId(), result.get(0).getBooker().getId());
+        assertEquals(booking.getItem().getName(), result.get(0).getItem().getName());
+        assertEquals(booking.getStartTime(), result.get(0).getStartTime());
+        assertEquals(booking.getEndTime(), result.get(0).getEndTime());
+        assertEquals(booking.getBookingStatus(), result.get(0).getStatus());
+    }
+
+    @Test
+    void getByOwnerId_whenStateIsCurrent_returnAllCurrentBookings() {
+        when(userRepository.findById(any())).thenReturn(Optional.of(owner));
+        when(bookingRepositoryJpa.findAllBookingsItemByForOwnerWithStartAndEndTime(any(), any(), any(), any()))
+                .thenReturn(List.of(currentBooking));
+        List<BookingForResponse> result =
+                bookingService.getByOwnerId(user.getId(), "CURRENT", 0, 5);
+
+        assertEquals(1, result.size());
+        assertEquals(currentBooking.getId(), result.get(0).getId());
+        assertEquals(currentBooking.getBooker().getId(), result.get(0).getBooker().getId());
+        assertEquals(currentBooking.getItem().getName(), result.get(0).getItem().getName());
+        assertEquals(currentBooking.getStartTime(), result.get(0).getStartTime());
+        assertEquals(currentBooking.getEndTime(), result.get(0).getEndTime());
+        assertEquals(currentBooking.getBookingStatus(), result.get(0).getStatus());
+    }
+
+    @Test
+    void getByOwnerId_whenStateIsPast_returnAllPastBookings() {
+
+        when(userRepository.findById(any())).thenReturn(Optional.of(owner));
+        when(bookingRepositoryJpa.findAllByItem_OwnerAndEndTimeIsBeforeOrderByStartTimeDesc(any(), any(), any()))
+                .thenReturn(List.of(pastBooking));
+        List<BookingForResponse> result = bookingService.getByOwnerId(owner.getId(), "PAST", 0, 5);
+
+        assertEquals(1, result.size());
+        assertEquals(pastBooking.getId(), result.get(0).getId());
+        assertEquals(pastBooking.getBooker().getId(), result.get(0).getBooker().getId());
+        assertEquals(pastBooking.getItem().getName(), result.get(0).getItem().getName());
+        assertEquals(pastBooking.getStartTime(), result.get(0).getStartTime());
+        assertEquals(pastBooking.getEndTime(), result.get(0).getEndTime());
+        assertEquals(pastBooking.getBookingStatus(), result.get(0).getStatus());
+    }
+
+    @Test
+    void getByOwnerId_whenStateIsFuture_returnAllFutureBookings() {
+
+        when(userRepository.findById(any())).thenReturn(Optional.of(owner));
+        when(bookingRepositoryJpa.findAllByItem_OwnerAndStartTimeIsAfterOrderByStartTimeDesc(any(), any(), any()))
+                .thenReturn(List.of(futureBooking));
+        List<BookingForResponse> result = bookingService.getByOwnerId(owner.getId(), "FUTURE", 0, 5);
+
+        assertEquals(1, result.size());
+        assertEquals(futureBooking.getId(), result.get(0).getId());
+        assertEquals(futureBooking.getBooker().getId(), result.get(0).getBooker().getId());
+        assertEquals(futureBooking.getItem().getName(), result.get(0).getItem().getName());
+        assertEquals(futureBooking.getStartTime(), result.get(0).getStartTime());
+        assertEquals(futureBooking.getEndTime(), result.get(0).getEndTime());
+        assertEquals(futureBooking.getBookingStatus(), result.get(0).getStatus());
+    }
+
+    @Test
+    void getByOwnerId_whenStateIsWaiting_returnAllWaitingBookings() {
+        when(userRepository.findById(any())).thenReturn(Optional.of(owner));
+        when(bookingRepositoryJpa.findAllByItem_OwnerAndBookingStatusEqualsOrderByStartTimeDesc(any(), any(), any()))
+                .thenReturn(List.of(waitingBooking));
+        List<BookingForResponse> result = bookingService.getByOwnerId(owner.getId(), "WAITING", 0, 5);
+
+        assertEquals(1, result.size());
+        assertEquals(waitingBooking.getId(), result.get(0).getId());
+        assertEquals(waitingBooking.getBooker().getId(), result.get(0).getBooker().getId());
+        assertEquals(waitingBooking.getItem().getName(), result.get(0).getItem().getName());
+        assertEquals(waitingBooking.getStartTime(), result.get(0).getStartTime());
+        assertEquals(waitingBooking.getEndTime(), result.get(0).getEndTime());
+        assertEquals(waitingBooking.getBookingStatus(), result.get(0).getStatus());
+    }
+
+    @Test
+    void getByOwnerId_whenStateIsRejected_returnAllRejectedBookings() {
+        when(userRepository.findById(any())).thenReturn(Optional.of(owner));
+        when(bookingRepositoryJpa.findAllByItem_OwnerAndBookingStatusEqualsOrderByStartTimeDesc(any(), any(), any()))
+                .thenReturn(List.of(rejectedBooking));
+        List<BookingForResponse> result = bookingService.getByOwnerId(owner.getId(), "REJECTED", 0, 5);
+
+        assertEquals(1, result.size());
+        assertEquals(rejectedBooking.getId(), result.get(0).getId());
+        assertEquals(rejectedBooking.getBooker().getId(), result.get(0).getBooker().getId());
+        assertEquals(rejectedBooking.getItem().getName(), result.get(0).getItem().getName());
+        assertEquals(rejectedBooking.getStartTime(), result.get(0).getStartTime());
+        assertEquals(rejectedBooking.getEndTime(), result.get(0).getEndTime());
+        assertEquals(rejectedBooking.getBookingStatus(), result.get(0).getStatus());
     }
 }

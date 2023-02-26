@@ -87,7 +87,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     @Override
     public List<ItemRequestDtoWithAnswers> getAllRequestForSee(Long userId, Integer from, Integer size) {
         if (from < 0) {
-            throw new ValidateException("Отрицательный параметр пагинации from = '" + from + ".");
+            throw new ValidateException("Отрицательный параметр пагинации from = '" + from + "'.");
         }
         if (size < 1) {
             throw new ValidateException("Не верный параметр пагинации size = '" + size + "'.");
