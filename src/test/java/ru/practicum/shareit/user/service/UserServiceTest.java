@@ -122,7 +122,7 @@ class UserServiceTest {
 
 
     @Test
-    void updateInStorage() {
+    void updateInStorage_whenAllIsOk_returnUpdatedUser() {
         UserDto createdUser = userService.addToStorage(userDto1);
 
         List<UserDto> beforeUpdateUsers = userService.getAllUsers();
@@ -146,6 +146,12 @@ class UserServiceTest {
         assertEquals(userDtoFromDbBeforeUpdate.getId(), userDtoFromDbAfterUpdate.getId());
         assertEquals(userDtoFromDbAfterUpdate.getName(), userDto2.getName());
         assertEquals(userDtoFromDbAfterUpdate.getEmail(), userDto2.getEmail());
+    }
+
+    @Test
+    void updateInStorage_whenUserNotFound_returnNotFoundRecordInBD() {
+        userDto1.setId(555L);
+        NotFoundRecordInBD ex = assertThrows(NotFoundRecordInBD.class, () -> userService.updateInStorage(userDto1));
     }
 
     @Test

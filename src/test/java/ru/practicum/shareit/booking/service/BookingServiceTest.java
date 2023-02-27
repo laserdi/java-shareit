@@ -52,6 +52,8 @@ class BookingServiceTest {
     Item item;
     BookingDto bookingDto;
     Booking booking;
+    BookingDto bookingDto777;
+    Booking booking777;
     //Current
     BookingDto currentBookingDto;
     Booking currentBooking;
@@ -116,6 +118,23 @@ class BookingServiceTest {
                 .booker(user)
                 .startTime(bookingDto.getStartTime())
                 .endTime(bookingDto.getEndTime())
+                .bookingStatus(BookingStatus.WAITING)
+                .build();
+
+        bookingDto777 = BookingDto.builder()
+                .id(1L)
+                .itemId(item.getId())
+                .booker(userForResponse)
+                .startTime(now.plusHours(36))
+                .endTime(now.plusHours(60))
+                .build();
+
+        booking777 = Booking.builder()
+                .id(bookingDto777.getId())
+                .item(item)
+                .booker(user)
+                .startTime(bookingDto777.getStartTime())
+                .endTime(bookingDto777.getEndTime())
                 .bookingStatus(BookingStatus.WAITING)
                 .build();
 
@@ -236,6 +255,41 @@ class BookingServiceTest {
         ValidateException ex = assertThrows(ValidateException.class,
                 () -> bookingService.createBooking(1L, bookingDto));
         assertEquals("Вещь нельзя забронировать, поскольку available = false.", ex.getMessage());
+    }
+
+    @Test
+    void createBooking_whenEndTimeIsWrong_returnValidateException() {
+        bookingDto.setEndTime(LocalDateTime.now().minusDays(1));
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(itemRepository.findById(any())).thenReturn(Optional.of(item));
+
+        ValidateException ex = assertThrows(ValidateException.class,
+                () -> bookingService.createBooking(user.getId(), bookingDto));
+        assertEquals("Окончание бронирования не может быть в прошлом.", ex.getMessage());
+    }
+
+    @Test
+    void createBooking_whenEndTimeBeforeStartTime_returnValidateException() {
+        bookingDto.setStartTime(LocalDateTime.now().plusDays(2));
+        bookingDto.setEndTime(LocalDateTime.now().plusDays(1));
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(itemRepository.findById(any())).thenReturn(Optional.of(item));
+
+        ValidateException ex = assertThrows(ValidateException.class,
+                () -> bookingService.createBooking(user.getId(), bookingDto));
+        assertEquals("Окончание бронирования не может быть раньше его начала.", ex.getMessage());
+    }
+
+    @Test
+    void createBooking_whenBookingIsCrossing_returnValidateException() {
+        item.setBookings(List.of(booking));
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(itemRepository.findById(any())).thenReturn(Optional.of(item));
+
+        ValidateException ex = assertThrows(ValidateException.class,
+                () -> bookingService.createBooking(user.getId(), bookingDto));
+        assertEquals("Найдено пересечение броней на эту вещь с name = " + item.getName() + ".",
+                ex.getMessage());
     }
 
     @Test

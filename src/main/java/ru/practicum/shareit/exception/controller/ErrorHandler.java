@@ -20,10 +20,10 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<?> handleForBadRequest(final ValidateException ex) {
-        String error = "Error message";
-        String message = ex.getMessage();
-        log.error(error + " — " + message);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error + message);
+//        String error = "Error message";
+//        String message = ex.getMessage();
+//        log.error(error + " — " + message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error message" + ex.getMessage());
     }
 
     @ExceptionHandler
@@ -38,20 +38,20 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<?> handleForUnsupportedStatus(final UnsupportedStatusException ex) {
-        String error = "{\n\"error\":\"Unknown state: UNSUPPORTED_STATUS\",\n" +
-                "\"message\":\"UNSUPPORTED_STATUS\"\n}";
-        String message = ex.getMessage();
-        log.error(error + " — " + message);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+//        String error = "{\n\"error\":\"Unknown state: UNSUPPORTED_STATUS\",\n\"message\":\"UNSUPPORTED_STATUS\"\n}";
+//        String message = ex.getMessage();
+//        log.error(error + " — " + message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\n\"error\":\"Unknown state: " +
+                "UNSUPPORTED_STATUS\",\n\"message\":\"UNSUPPORTED_STATUS\"\n}");
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<?> handleForMethodArgumentNotValidException(final MethodArgumentNotValidException ex) {
-        String error = "Error 400. Не правильное значение аргумента.";
-        String message = ex.getMessage();
-        log.error(error);
-        System.out.println(message);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+//        String error = "Error 400. Не правильное значение аргумента.";
+//        String message = ex.getMessage();
+//        log.error(error);
+//        System.out.println(message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error 400. Не правильное значение аргумента.");
     }
 }

@@ -233,36 +233,28 @@ public class BookingServiceImpl implements BookingService {
         User bookerFromDb = userRepositoryJpa.findById(userId).orElseThrow(() -> new NotFoundRecordInBD("При " +
                 "получении списка бронирований не найден хозяин с ID = " + userId + " в БД."));
         List<Booking> result = new ArrayList<>();
-
         switch (bookingState) {
-            case ALL: {
+            case ALL:
                 result = bookingRepositoryJpa.findAllByItem_OwnerOrderByStartTimeDesc(bookerFromDb, pageable);
                 break;
-            }
-            case CURRENT: {
+            case CURRENT:
                 result = bookingRepositoryJpa.findAllBookingsItemByForOwnerWithStartAndEndTime(bookerFromDb, nowDateTime, nowDateTime, pageable);
                 break;
-            }
-            case PAST: {
+            case PAST:
                 result = bookingRepositoryJpa.findAllByItem_OwnerAndEndTimeIsBeforeOrderByStartTimeDesc(bookerFromDb, nowDateTime, pageable);
                 break;
-            }
-            case FUTURE: {
+            case FUTURE:
                 result = bookingRepositoryJpa.findAllByItem_OwnerAndStartTimeIsAfterOrderByStartTimeDesc(
                         bookerFromDb, nowDateTime, pageable);
                 break;
-            }
-            case WAITING: {
+            case WAITING:
                 result = bookingRepositoryJpa.findAllByItem_OwnerAndBookingStatusEqualsOrderByStartTimeDesc(bookerFromDb, BookingStatus.WAITING, pageable);
                 break;
-            }
-            case REJECTED: {
+            case REJECTED:
                 result = bookingRepositoryJpa.findAllByItem_OwnerAndBookingStatusEqualsOrderByStartTimeDesc(bookerFromDb, BookingStatus.REJECTED, pageable);
                 break;
-            }
-            case UNKNOWN: {
+            case UNKNOWN:
                 throw new UnsupportedStatusException("Unknown state: UNSUPPORTED_STATUS");
-            }
         }
         return result.stream()
                 .map(bookingForResponseMapper::mapToDto).collect(Collectors.toList());
@@ -285,19 +277,16 @@ public class BookingServiceImpl implements BookingService {
             log.info(message);
             throw new ValidateException(message);
         }
-
         if (bookingDto.getEndTime().isBefore(LocalDateTime.now())) {
             String message = "Окончание бронирования не может быть в прошлом.";
             log.info(message);
             throw new ValidateException(message);
         }
-
         if (bookingDto.getEndTime().isBefore(bookingDto.getStartTime())) {
             String message = "Окончание бронирования не может быть раньше его начала.";
             log.info(message);
             throw new ValidateException(message);
         }
-
         List<Booking> bookings = item.getBookings();
         if (bookings != null && !bookings.isEmpty()) {
             for (Booking b : bookings) {

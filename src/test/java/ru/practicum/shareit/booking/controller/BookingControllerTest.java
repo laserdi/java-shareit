@@ -14,13 +14,18 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingForResponse;
+import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatus;
+import ru.practicum.shareit.booking.repository.BookingRepositoryJpa;
 import ru.practicum.shareit.booking.service.BookingService;
+import ru.practicum.shareit.exception.ValidateException;
 import ru.practicum.shareit.item.mapper.ItemForResponseDtoMapper;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.repository.ItemRepositoryJpa;
 import ru.practicum.shareit.user.dto.UserForResponseDto;
 import ru.practicum.shareit.user.mapper.UserToUserOnlyWithIdDtoMapper;
 import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.repository.UserRepositoryJpa;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,17 +44,20 @@ public class BookingControllerTest {
     ObjectMapper objectMapper;
     @MockBean
     BookingService bookingService;
+    @MockBean
+    ItemRepositoryJpa itemRepositoryJpa;
+    @MockBean
+    UserRepositoryJpa userRepositoryJpa;
+    @MockBean
+    BookingRepositoryJpa bookingRepositoryJpa;
     @Autowired
     MockMvc mockMvc;
 
-    //    @Autowired
-    //    UserToUserOnlyWithIdDtoMapper userOnlyIdMapper;
-    //    @Autowired
     /**
      * mapper
      */
     @Spy        //Для интерфейса используем Spy.
-    ItemForResponseDtoMapper itemForResponseDtoMapper;
+            ItemForResponseDtoMapper itemForResponseDtoMapper;
     /**
      * mapper
      */
@@ -114,7 +122,7 @@ public class BookingControllerTest {
 
     @SneakyThrows   //позволяет "бесшумно" выбрасывать проверяемые исключения, не объявляя их явно в условии throws.
     @Test
-    void add() {
+    void add_whenAllIsOk_returnBookingForResponse() {
         BookingForResponse bookingDto1ForResponse = BookingForResponse.builder()
                 .id(1L)
                 .startTime(bookingDtoForCreate.getStartTime())
@@ -136,6 +144,53 @@ public class BookingControllerTest {
                 .getContentAsString();
 
         assertEquals(objectMapper.writeValueAsString(bookingDto1ForResponse), result);
+    }
+
+    @SneakyThrows   //позволяет "бесшумно" выбрасывать проверяемые исключения, не объявляя их явно в условии throws.
+    @Test
+    void add_whenEndTimeBeforeStartTime_returnValidateException() {
+        BookingForResponse bookingDto1ForResponse = BookingForResponse.builder()
+                .id(1L)
+                .startTime(now.plusDays(2))
+                .endTime(now.plusDays(1))
+                .item(itemForResponseDtoMapper.mapToDto(item1))
+                .booker(userOnlyWithIdDtoMapper.mapToDto(booker101))
+                .status(BookingStatus.WAITING).build();
+
+        bookingDtoForCreate = BookingDto.builder()
+                .id(1L)
+                .itemId(1L)
+                .booker(UserForResponseDto.builder().id(booker101.getId()).name(booker101.getName()).build())
+                .startTime(bookingDto1ForResponse.getStartTime())
+                .endTime(bookingDto1ForResponse.getEndTime())
+                .bookingStatus(BookingStatus.WAITING)
+                .build();
+
+        Booking booking = Booking.builder()
+                .id(bookingDtoForCreate.getId())
+                .item(item1)
+                .booker(booker101)
+                .startTime(bookingDtoForCreate.getStartTime())
+                .endTime(bookingDtoForCreate.getEndTime())
+                .bookingStatus(bookingDtoForCreate.getBookingStatus())
+                .build();
+
+        item1.setBookings(List.of(booking));
+//        when(itemRepositoryJpa.findById(any())).thenReturn(Optional.of(item1));
+//        when(userRepositoryJpa.findById(any())).thenReturn(Optional.of(booker101));
+        when(bookingService.createBooking(any(), any())).thenThrow(ValidateException.class);
+
+        String result = mockMvc.perform(post("/bookings")
+                        .header("X-Sharer-User-Id", booker101.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(bookingDtoForCreate)))
+
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertEquals("Error messagenull", result);
     }
 
     @SneakyThrows   //позволяет "бесшумно" выбрасывать проверяемые исключения, не объявляя их явно в условии throws.
@@ -211,11 +266,11 @@ public class BookingControllerTest {
                 .thenReturn(List.of(bookingDto1ForResponse));
 
         String result = mockMvc.perform(get("/bookings")
-                .header("X-Sharer-User-Id", booker101.getId())
-                .param("state", "ALL")
-                .param("from", "0")
-                .param("size", "10")
-                .contentType(MediaType.APPLICATION_JSON))
+                        .header("X-Sharer-User-Id", booker101.getId())
+                        .param("state", "ALL")
+                        .param("from", "0")
+                        .param("size", "10")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();

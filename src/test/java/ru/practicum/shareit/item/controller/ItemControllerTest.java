@@ -11,17 +11,19 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.exception.NotFoundRecordInBD;
+import ru.practicum.shareit.item.comment.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingAndCommentsDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.model.User;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -209,5 +211,25 @@ public class ItemControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isNotFound());
+    }
+
+    @SneakyThrows   //позволяет "бесшумно" выбрасывать проверяемые исключения, не объявляя их явно в условии throws.
+    @Test
+    void addCommentToItem_whenAllIsOk_returnSavedComment() {
+        CommentDto commentDto = CommentDto.builder()
+                .id(1L)
+                .content("comment 1")
+                .authorName("name user")
+                .createdDate(LocalDateTime.now().minusSeconds(5)).build();
+        when(itemService.saveComment(any(), any(), any())).thenReturn(commentDto);
+
+        mockMvc.perform(post("/items/{itemId}/comment", item.getId())
+                        .header("X-Sharer-User-Id", "1")
+                        .content(objectMapper.writeValueAsString(commentDto))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(commentDto.getId()), Long.class))
+                .andExpect(jsonPath("$.text", is(commentDto.getContent()), String.class))
+                .andExpect(jsonPath("$.authorName", is(commentDto.getAuthorName()), String.class));
     }
 }
