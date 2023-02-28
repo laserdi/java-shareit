@@ -110,6 +110,7 @@ class BookingServiceTest {
                 .booker(userForResponse)
                 .startTime(now.plusDays(1))
                 .endTime(now.plusDays(2))
+                .bookingStatus(BookingStatus.WAITING)
                 .build();
 
         booking = Booking.builder()
@@ -118,7 +119,7 @@ class BookingServiceTest {
                 .booker(user)
                 .startTime(bookingDto.getStartTime())
                 .endTime(bookingDto.getEndTime())
-                .bookingStatus(BookingStatus.WAITING)
+                .bookingStatus(bookingDto.getBookingStatus())
                 .build();
 
         bookingDto777 = BookingDto.builder()
@@ -127,6 +128,7 @@ class BookingServiceTest {
                 .booker(userForResponse)
                 .startTime(now.plusHours(36))
                 .endTime(now.plusHours(60))
+                .bookingStatus(BookingStatus.WAITING)
                 .build();
 
         booking777 = Booking.builder()
@@ -135,7 +137,7 @@ class BookingServiceTest {
                 .booker(user)
                 .startTime(bookingDto777.getStartTime())
                 .endTime(bookingDto777.getEndTime())
-                .bookingStatus(BookingStatus.WAITING)
+                .bookingStatus(bookingDto777.getBookingStatus())
                 .build();
 
         //Current
@@ -143,6 +145,7 @@ class BookingServiceTest {
                 .id(2L)
                 .startTime(now.minusDays(1))
                 .endTime(now.plusDays(1))
+                .bookingStatus(BookingStatus.APPROVED)
                 .build();
 
         currentBooking = Booking.builder()
@@ -151,7 +154,7 @@ class BookingServiceTest {
                 .booker(user)
                 .startTime(currentBookingDto.getStartTime())
                 .endTime(currentBookingDto.getEndTime())
-                .bookingStatus(BookingStatus.APPROVED)
+                .bookingStatus(currentBookingDto.getBookingStatus())
                 .build();
 
         //Past
@@ -159,6 +162,7 @@ class BookingServiceTest {
                 .id(3L)
                 .startTime(now.minusDays(1000))
                 .endTime(now.minusDays(999))
+                .bookingStatus(BookingStatus.APPROVED)
                 .build();
 
         pastBooking = Booking.builder()
@@ -167,7 +171,7 @@ class BookingServiceTest {
                 .booker(user)
                 .startTime(pastBookingDto.getStartTime())
                 .endTime(pastBookingDto.getEndTime())
-                .bookingStatus(BookingStatus.APPROVED)
+                .bookingStatus(pastBookingDto.getBookingStatus())
                 .build();
 
         //Future
@@ -175,6 +179,7 @@ class BookingServiceTest {
                 .id(4L)
                 .startTime(now.minusDays(999))
                 .endTime(now.minusDays(1000))
+                .bookingStatus(BookingStatus.APPROVED)
                 .build();
 
         futureBooking = Booking.builder()
@@ -183,7 +188,7 @@ class BookingServiceTest {
                 .booker(user)
                 .startTime(futureBookingDto.getStartTime())
                 .endTime(futureBookingDto.getEndTime())
-                .bookingStatus(BookingStatus.APPROVED)
+                .bookingStatus(futureBookingDto.getBookingStatus())
                 .build();
 
         //Waiting
@@ -191,6 +196,7 @@ class BookingServiceTest {
                 .id(5L)
                 .startTime(now.plusDays(1))
                 .endTime(now.minusDays(2))
+                .bookingStatus(BookingStatus.WAITING)
                 .build();
 
         waitingBooking = Booking.builder()
@@ -199,7 +205,7 @@ class BookingServiceTest {
                 .booker(user)
                 .startTime(waitingBookingDto.getStartTime())
                 .endTime(waitingBookingDto.getEndTime())
-                .bookingStatus(BookingStatus.APPROVED)
+                .bookingStatus(waitingBookingDto.getBookingStatus())
                 .build();
 
         //Rejected
@@ -216,7 +222,7 @@ class BookingServiceTest {
                 .booker(user)
                 .startTime(rejectedBookingDto.getStartTime())
                 .endTime(rejectedBookingDto.getEndTime())
-                .bookingStatus(BookingStatus.APPROVED)
+                .bookingStatus(rejectedBookingDto.getBookingStatus())
                 .build();
     }
 
@@ -520,6 +526,7 @@ class BookingServiceTest {
                 () -> bookingService.getByUserId(1L, "state", 0, -1));
         assertEquals("Не верный параметр пагинации size = '-1'.", ex.getMessage());
     }
+    ///////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * • Получение списка бронирований для всех вещей текущего пользователя, то есть хозяина вещей.
@@ -528,6 +535,16 @@ class BookingServiceTest {
     void getByOwnerId_whenBookingStateIsWrong_returnUnsupportedStatusException() {
         UnsupportedStatusException ex = assertThrows(UnsupportedStatusException.class,
                 () -> bookingService.getByOwnerId(1L, "22151", 1, 2));
+        assertEquals("Unknown state: UNSUPPORTED_STATUS", ex.getMessage());
+    }
+
+    @Test
+    void getByOwnerId_whenBookingStateIsUnsupportedStatus_returnUnsupportedStatusException() {
+        when(userRepository.findById(any())).thenReturn(Optional.of(owner));
+        when(bookingRepositoryJpa.findAllByItem_OwnerOrderByStartTimeDesc(any(), any()))
+                .thenReturn(List.of(booking));
+        UnsupportedStatusException ex = assertThrows(UnsupportedStatusException.class,
+                () -> bookingService.getByOwnerId(owner.getId(), "UNKNOWN", 1, 2));
         assertEquals("Unknown state: UNSUPPORTED_STATUS", ex.getMessage());
     }
 
@@ -557,7 +574,6 @@ class BookingServiceTest {
         assertEquals("При получении списка бронирований не найден хозяин с ID = 1 в БД.", ex.getMessage());
     }
 
-    ////////////////////////////////////////
     @Test
     void getByOwnerId_whenStateIsAll_returnAllBookings() {
         when(userRepository.findById(any())).thenReturn(Optional.of(owner));

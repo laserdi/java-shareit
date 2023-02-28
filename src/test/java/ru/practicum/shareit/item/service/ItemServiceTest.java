@@ -11,8 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingForResponse;
 import ru.practicum.shareit.booking.mapper.BookingForItemDtoMapper;
+import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatus;
+import ru.practicum.shareit.booking.repository.BookingRepositoryJpa;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exception.NotFoundRecordInBD;
 import ru.practicum.shareit.exception.ValidateException;
@@ -63,6 +65,7 @@ class ItemServiceTest {
     private final UserForResponseMapper userForResponseMapper;
     private final CommentRepository commentRepository;
     private final CommentDtoMapper commentDtoMapper;
+    private final BookingMapper bookingMapper;
     private final EntityManager em;
     ItemRequest itemRequest1;
     ItemRequest itemRequest2;
@@ -91,6 +94,8 @@ class ItemServiceTest {
     private ItemRepositoryJpa itemRepositoryJpa;
     @Autowired
     private UserRepositoryJpa userRepositoryJpa;
+    @Autowired
+    private BookingRepositoryJpa bookingRepositoryJpa;
 
     @BeforeEach
     void setUp() {
@@ -249,8 +254,10 @@ class ItemServiceTest {
         assertEquals(savedItemDtoBeforeUpd.getRequestId(), itemDtos.get(0).getRequestId());
         assertEquals(savedItemDtoBeforeUpd.getAvailable(), itemDtos.get(0).getAvailable());
 
-        ItemDto updatedItem = savedItemDtoBeforeUpd.toBuilder().name("new name")
-                .description("new description").requestId(55L).build();
+        ItemDto updatedItem = savedItemDtoBeforeUpd.toBuilder()
+                .name("new name")
+                .description("new description")
+                .requestId(55L).build();
         ItemDto savedUpdItem =
                 itemService.updateInStorage(savedItemDtoBeforeUpd.getId(), updatedItem, savedOwnerDto1.getId());
 
@@ -353,6 +360,69 @@ class ItemServiceTest {
 
     @Test
     void getItemWithBookingAndComment() {
+        UserDto savedBooker = userService.addToStorage(bookerDto);
+        booker.setId(savedBooker.getId());  //запись полученного ID.
+        bookerDto.setId(savedBooker.getId());  //запись полученного ID.
+        UserForResponseDto bookerForResponse = userForResponseMapper.mapToDto(booker);
+        assertEquals(savedBooker.getId(), booker.getId());
+        assertEquals(savedBooker.getName(), booker.getName());
+        assertEquals(savedBooker.getEmail(), booker.getEmail());
+
+
+
+        UserDto savedOwnerDto1 = userService.addToStorage(ownerDto1);
+        owner1.setId(savedOwnerDto1.getId());     //запись полученного ID.
+        ownerDto1.setId(savedOwnerDto1.getId());  //запись полученного ID.
+        assertEquals(savedOwnerDto1.getId(), owner1.getId());
+        assertEquals(savedOwnerDto1.getName(), owner1.getName());
+        assertEquals(savedOwnerDto1.getEmail(), owner1.getEmail());
+
+        ItemDto savedItemDto01 = itemService.add(itemDto1, savedOwnerDto1.getId());
+        itemDto1.setId(savedItemDto01.getId()); //запись полученного ID.
+        item1.setId(savedItemDto01.getId()); //запись полученного ID.
+        assertEquals(savedItemDto01.getId(), item1.getId());
+        assertEquals(savedItemDto01.getName(), item1.getName());
+        assertEquals(savedItemDto01.getDescription(), item1.getDescription());
+
+        bookingDto1 = BookingDto.builder()
+                .itemId(item1.getId())
+                .booker(bookerForResponse)
+                .startTime(now.plusSeconds(1)).endTime(now.plusSeconds(2))
+                .bookingStatus(BookingStatus.APPROVED)
+                .build();
+
+        booking1 = Booking.builder()
+                .item(item1)
+                .booker(booker)
+                .startTime(bookingDto1.getStartTime()).endTime(bookingDto1.getEndTime())
+                .bookingStatus(bookingDto1.getBookingStatus())
+                .build();
+
+        BookingForResponse savedBookingForResponse = bookingService.createBooking(bookerDto.getId(), bookingDto1);
+        booking1.setId(savedBookingForResponse.getId());        //запись полученного ID.
+        bookingDto1.setId(savedBookingForResponse.getId());     //запись полученного ID.
+/////////////////////////////////////////////////////
+        item1.setBookings(List.of(booking1));
+        assertDoesNotThrow(() -> Thread.sleep(1500));   //Чтобы бронь стала прошедшей.
+
+        Comment comment1 = Comment.builder().content("content commentary").item(item1).author(booker)
+                .createdDate(LocalDateTime.now()).build();
+        Comment savedComment1 = commentRepository.save(comment1);
+        comment1.setId(savedComment1.getId());      //запись полученного ID.
+
+        ItemWithBookingAndCommentsDto result =
+                itemService.getItemWithBookingAndComment(item1.getId(), owner1.getId());
+
+        assertEquals(item1.getName(), result.getName());
+        assertEquals(item1.getDescription(), result.getDescription());
+        assertEquals(item1.getRequestId(), result.getRequestId());
+        assertEquals(item1.getAvailable(), result.getAvailable());
+        assertEquals(comment1.getContent(), result.getFeedbacks().get(0).getContent());
+        assertEquals(comment1.getAuthor().getName(), result.getFeedbacks().get(0).getAuthorName());
+    }
+
+    @Test
+    void getItemWithBookingAndComment_when() {
         UserDto savedBooker = userService.addToStorage(bookerDto);
         booker.setId(savedBooker.getId());  //запись полученного ID.
         bookerDto.setId(savedBooker.getId());  //запись полученного ID.
@@ -495,7 +565,7 @@ class ItemServiceTest {
         ItemRepositoryJpa itemRepositoryJpa2 = mock(ItemRepositoryJpa.class);
         CommentRepository commentRepository2 = mock(CommentRepository.class);
         ValidationService validationService2 = mock(ValidationService.class);
-        ItemService itemService2 = new ItemServiceImpl(itemRepositoryJpa2, userRepositoryJpa2, validationService2,
+        ItemService itemService2 = new ItemServiceImpl(bookingRepositoryJpa, itemRepositoryJpa2, userRepositoryJpa2, validationService2,
                 itemMapper, bookingForItemDtoMapper, commentRepository2, itemWithBAndCDtoMapper, commentDtoMapper);
 
         when(userRepositoryJpa2.findById(any()))

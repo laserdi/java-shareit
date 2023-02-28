@@ -79,6 +79,26 @@ public class UserControllerTest {
                 .andExpect((jsonPath("$.email").value(user.getEmail())));
     }
 
+
+    @SneakyThrows   //позволяет "бесшумно" выбрасывать проверяемые исключения, не объявляя их явно в условии throws.
+    @Test
+    void updateInStorage_whenAllIsOk_returnUserDto() {
+        when(userService.updateInStorage(any()))
+                .thenReturn(userDto);
+        String result = mockMvc.perform(patch("/users/{userId}", userDto.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(user.getId()))
+                .andExpect(jsonPath("$.name").value(user.getName()))
+                .andExpect((jsonPath("$.email").value(user.getEmail())))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertEquals(objectMapper.writeValueAsString(userDto), result);
+    }
+
     /**
      * Получить список всех пользователей.
      */
@@ -126,6 +146,4 @@ public class UserControllerTest {
                 .andExpect(status().isOk());
         verify(userService, times(1)).removeFromStorage(user.getId());
     }
-
-
 }

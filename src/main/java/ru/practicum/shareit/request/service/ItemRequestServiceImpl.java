@@ -41,8 +41,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
             throw new ValidateException("Передан неверный параметр пользователя (ID = " + null + ").");
         }
 
-        User userFromDb = userRepositoryJpa.findById(requesterId)
-                .orElseThrow(() -> new NotFoundRecordInBD("Не найден пользователь (ID = '" + requesterId +
+        User userFromDb = userRepositoryJpa.findById(requesterId).orElseThrow(() -> new NotFoundRecordInBD("Не найден пользователь (ID = '" + requesterId +
                         "') в БД при создании заявки на вещь."));
         ItemRequest itemRequest = itemRequestDtoMapper.mapToModel(itemRequestDto);
         itemRequest.setRequester(userFromDb);
@@ -62,9 +61,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
      */
     @Override
     public List<ItemRequestDtoWithAnswers> getItemRequestsByUserId(Long requesterId) {
-        User requester = userRepositoryJpa.findById(requesterId)
-                .orElseThrow(() -> new NotFoundRecordInBD("При выдаче списка запросов пользователя (ID = '"
-                        + requesterId + "') этот пользователь не найден в БД."));
+        User requester = userRepositoryJpa.findById(requesterId).orElseThrow(() -> new NotFoundRecordInBD("При выдаче списка запросов пользователя (ID = '" + requesterId + "') этот пользователь не найден в БД."));
         List<ItemRequest> itemRequests = itemRequestRepository.getAllByRequester_IdOrderByCreatedDesc(requesterId);
         List<ItemRequestDtoWithAnswers> result = itemRequests.stream()
                 .map(itemRequestDtoWithAnswersMapper::mapToDto).collect(Collectors.toList());
@@ -92,12 +89,9 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         if (size < 1) {
             throw new ValidateException("Не верный параметр пагинации size = '" + size + "'.");
         }
-        User requester = userRepositoryJpa.findById(userId)
-                .orElseThrow(() -> new NotFoundRecordInBD("Произошла ошибка при выдаче списка всех запросов кроме запросов " +
-                        "пользователя (ID = '" + userId + "'). Этот пользователь не найден в БД."));
+        User requester = userRepositoryJpa.findById(userId).orElseThrow(() -> new NotFoundRecordInBD("Произошла ошибка при выдаче списка всех запросов кроме запросов пользователя (ID = '" + userId + "'). Этот пользователь не найден в БД."));
         Pageable pageable = PageRequest.of(from / size, size);
-        List<ItemRequest> itemRequests =
-                itemRequestRepository.getItemRequestByRequesterIdIsNotOrderByCreated(userId, pageable);
+        List<ItemRequest> itemRequests = itemRequestRepository.getItemRequestByRequesterIdIsNotOrderByCreated(userId, pageable);
 
         List<ItemRequestDtoWithAnswers> result = itemRequests.stream()
                 .map(itemRequestDtoWithAnswersMapper::mapToDto).collect(Collectors.toList());
@@ -114,16 +108,14 @@ public class ItemRequestServiceImpl implements ItemRequestService {
      */
     @Override
     public ItemRequestDtoWithAnswers getItemRequestById(Long userId, Long requestId) {
-        User user = userRepositoryJpa.findById(userId)
-                .orElseThrow(() -> new NotFoundRecordInBD("При попытке выдачи запроса по ID в БД не найден " +
+        User user = userRepositoryJpa.findById(userId).orElseThrow(() -> new NotFoundRecordInBD("При попытке выдачи запроса по ID в БД не найден " +
                         "пользователь, сделавший запрос."));
         if (requestId == null) {
             String message = "При попытке выдачи запроса по ID передан не правильный ID, равный null.";
             log.info(message);
             throw new ValidateException(message);
         }
-        ItemRequest result = itemRequestRepository.findById(requestId)
-                .orElseThrow(() -> new NotFoundRecordInBD("При попытке выдачи запроса по ID этот запрос не найден ."));
+        ItemRequest result = itemRequestRepository.findById(requestId).orElseThrow(() -> new NotFoundRecordInBD("При попытке выдачи запроса по ID этот запрос не найден ."));
         log.info("Выдан запрос по его ID = '" + requestId + "'.");
         return itemRequestDtoWithAnswersMapper.mapToDto(result);
     }

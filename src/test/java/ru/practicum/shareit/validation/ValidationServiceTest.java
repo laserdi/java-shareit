@@ -9,10 +9,11 @@ import ru.practicum.shareit.user.model.User;
 
 import java.util.ArrayList;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ValidationServiceTest {
-    private ValidationService validationService;
+    ValidationService validationService;
     Item item;
     User owner1;
     UserDto ownerDto1;
@@ -44,24 +45,32 @@ class ValidationServiceTest {
     @Test
     void validateItemFields_whenNameIsBlank_returnValidateException() {
         item.setName("");
-        assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
+        ValidateException ex = assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
+        assertEquals("Название вещи не может пустым.", ex.getMessage());
     }
 
     @Test
     void validateItemFields_whenDescriptionIsBlank_returnValidateException() {
         item.setDescription("");
-        assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
+        ValidateException ex =
+                assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
+        assertEquals("Описание вещи не может быть пустым.", ex.getMessage());
+
     }
 
     @Test
     void validateItemFields_whenStatusIsNull_returnValidateException() {
         item.setAvailable(null);
-        assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
+        ValidateException ex =
+                assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
+        assertEquals("Для вещи необходим статус её бронирования.", ex.getMessage());
     }
 
     @Test
     void validateItemFields_whenOwnerIsNull_returnValidateException() {
         item.setOwner(null);
-        assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
+        ValidateException ex =
+                assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
+        assertEquals("Для вещи необходим хозяин.", ex.getMessage());
     }
 }

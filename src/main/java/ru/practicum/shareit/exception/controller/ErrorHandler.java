@@ -20,9 +20,9 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<?> handleForBadRequest(final ValidateException ex) {
-//        String error = "Error message";
-//        String message = ex.getMessage();
-//        log.error(error + " — " + message);
+        String error = "Error message";
+        String message = ex.getMessage();
+        log.error(error + " — " + message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error message" + ex.getMessage());
     }
 

@@ -1,6 +1,11 @@
 package ru.practicum.shareit.item.service;
 
+import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.comment.dto.CommentDto;
 import ru.practicum.shareit.item.comment.mapper.CommentDtoMapper;
@@ -20,12 +25,31 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class ItemServiceImpl2Test {
-    UserRepositoryJpa userRepositoryJpa2;
-    ItemRepositoryJpa itemRepositoryJpa2;
-    CommentRepository commentRepository2;
-    ValidationService validationService2;
+@Transactional
+@SpringBootTest(
+//        properties = "db.name=test",
+        webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
+class ItemServiceImplTest {
+    ItemService itemService;
+    UserRepositoryJpa userRepositoryJpa;
+    ItemRepositoryJpa itemRepositoryJpa;
+    CommentRepository commentRepository;
+    ValidationService validationService;
     LocalDateTime now = LocalDateTime.now();
+
+    @BeforeEach
+    void setUp() {
+        itemRepositoryJpa = mock(ItemRepositoryJpa.class);
+        userRepositoryJpa = mock(UserRepositoryJpa.class);
+/*
+        bookingRepositoryJpa = mock(BookingRepositoryJpa.class);
+        itemRepository = mock(ItemRepositoryJpa.class);
+        bookingService = new BookingServiceImpl(bookingRepositoryJpa, itemRepository, userRepository, bookingMapper,
+                bookingForResponseBookingDtoMapper);
+*/
+
+    }
 
     @Test
     void getItemWithBookingAndComment() {
@@ -85,15 +109,12 @@ class ItemServiceImpl2Test {
 //        ItemService itemService2 = new ItemServiceImpl(itemRepositoryJpa2, userRepositoryJpa2, validationService2,
 //                itemMapper, bookingForItemDtoMapper, commentRepository2, itemWithBAndCDtoMapper, commentDtoMapper);
 
-        when(userRepositoryJpa2.findById(any()))
-                .thenReturn(Optional.of(userForTest2));
-        when(itemRepositoryJpa2.findById(any()))
-                .thenReturn(Optional.of(itemFromBd));
-        when(commentRepository2.save(any()))
-                .thenReturn(outputComment);
+        when(userRepositoryJpa2.findById(any())).thenReturn(Optional.of(userForTest2));
+        when(itemRepositoryJpa2.findById(any())).thenReturn(Optional.of(itemFromBd));
+        when(commentRepository2.save(any())).thenReturn(outputComment);
 
 //        CommentDto outputCommentDto =
-//                itemService2.saveComment(userForTest2.getId(), itemFromBd.getId(), inputCommentDto);
+//                itemService.saveComment(userForTest2.getId(), itemFromBd.getId(), inputCommentDto);
 //
 //        assertEquals(commentDto.getContent(), outputCommentDto.getContent());
 //        assertEquals(commentDto.getAuthorName(), outputCommentDto.getAuthorName());

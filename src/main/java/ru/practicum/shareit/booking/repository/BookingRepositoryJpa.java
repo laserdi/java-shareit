@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatus;
+import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
@@ -139,4 +140,10 @@ public interface BookingRepositoryJpa extends JpaRepository<Booking, Long> {
     List<Booking> findAllByItem_OwnerAndBookingStatusEqualsOrderByStartTimeDesc(
             User user, BookingStatus bookingStatus, Pageable pageable);
 
+    /**
+     * Список всех броней вещи.
+     * @param item вещь, для которой ищутся брони.
+     */
+    //@Query("select b from Booking b where b.item = ?1 order by b.startTime DESC")
+    List<Booking> findAllByItemOrderByStartTimeDesc(Item item);
 }

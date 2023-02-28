@@ -10,6 +10,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.NotFoundRecordInBD;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.mapper.UserMapper;
+import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepositoryJpa;
 
 import javax.validation.ConstraintViolationException;
@@ -25,13 +27,19 @@ import static org.junit.jupiter.api.Assertions.*;
 //        properties = "db.name=test",
         webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-class UserServiceTest {
+class UserServiceImplTest {
 
     private final UserService userService;
     private final UserRepositoryJpa userRepositoryJpa;
-
+    private final UserMapper userMapper;
     UserDto userDto1;
+    User user1;
     UserDto userDto2;
+    User user2;
+    User userNull;
+    UserDto userDtoNull;
+    User userAllFieldsNull;
+    UserDto userDtoAllFieldsNull;
 
     @BeforeEach
     void setUp() {
@@ -39,14 +47,24 @@ class UserServiceTest {
                 .name("name userDto1")
                 .email("userDto1@mans.gf")
                 .build();
+        user1 = User.builder().id(userDto1.getId()).name(userDto1.getName()).email(userDto1.getEmail()).build();
+
         userDto2 = UserDto.builder()
                 .name("name userDto2")
                 .email("userDto2@mans.gf")
                 .build();
+        user2 = User.builder().id(userDto2.getId()).name(userDto2.getName()).email(userDto2.getEmail()).build();
+
+        userAllFieldsNull = new User();
+        userDtoAllFieldsNull = new UserDto();
+
+        userNull = null;
+        userDtoNull = null;
+
     }
 
     @Test
-    void getUserById() {
+    void getUserById_WhenAllIsOk() {
         UserDto savedUser = userService.addToStorage(userDto1);
 
         UserDto user = userService.getUserById(savedUser.getId());
@@ -159,10 +177,59 @@ class UserServiceTest {
         UserDto savedUser = userService.addToStorage(userDto1);
         List<UserDto> beforeDelete = userService.getAllUsers();
         assertEquals(1, beforeDelete.size());
-
         userService.removeFromStorage(savedUser.getId());
         List<UserDto> afterDelete = userService.getAllUsers();
         assertEquals(0, afterDelete.size());
     }
+
+    /**
+     * Тестирование всех маперов.
+     */
+    @Test
+    void userMapperTest_mapToModel_whenAllIsOk() {
+        User user1 = userMapper.mapToModel(userDto1);
+        assertEquals(userDto1.getId(), user1.getId());
+        assertEquals(userDto1.getName(), user1.getName());
+        assertEquals(userDto1.getEmail(), user1.getEmail());
+    }
+
+    @Test
+    void userMapperTest_mapToModel_whenAllFieldsAreNull() {
+        User userNull = userMapper.mapToModel(userDtoAllFieldsNull);
+        assertEquals(userDtoAllFieldsNull.getId(), userNull.getId());
+        assertEquals(userDtoAllFieldsNull.getName(), userNull.getName());
+        assertEquals(userDtoAllFieldsNull.getEmail(), userNull.getEmail());
+    }
+
+    @Test
+    void userMapperTest_mapToModel_whenDtoIsNull() {
+        User user1 = userMapper.mapToModel(userDtoNull);
+        assertNull(userDtoNull);
+        assertNull(user1);
+    }
+
+    @Test
+    void userMapperTest_mapToDto_whenAllIsOk() {
+        UserDto userDto1 = userMapper.mapToDto(user1);
+        assertEquals(user1.getId(), userDto1.getId());
+        assertEquals(user1.getName(), userDto1.getName());
+        assertEquals(user1.getEmail(), userDto1.getEmail());
+    }
+
+    @Test
+    void userMapperTest_mapToDto_whenAllFieldsAreNull() {
+        UserDto userDtoNull = userMapper.mapToDto(userAllFieldsNull);
+        assertEquals(userAllFieldsNull.getId(), userDtoNull.getId());
+        assertEquals(userAllFieldsNull.getName(), userDtoNull.getName());
+        assertEquals(userAllFieldsNull.getEmail(), userDtoNull.getEmail());
+    }
+
+    @Test
+    void userMapperTest_mapToDto_whenModelIsNull() {
+        UserDto userDto1 = userMapper.mapToDto(userNull);
+        assertNull(userNull);
+        assertNull(userDto1);
+    }
+
 
 }

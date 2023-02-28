@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.mapper.BookingForItemDtoMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatus;
+import ru.practicum.shareit.booking.repository.BookingRepositoryJpa;
 import ru.practicum.shareit.exception.NotFoundRecordInBD;
 import ru.practicum.shareit.exception.ValidateException;
 import ru.practicum.shareit.item.comment.dto.CommentDto;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class ItemServiceImpl implements ItemService {
+    private final BookingRepositoryJpa bookingRepositoryJpa;
     private final ItemRepositoryJpa itemRepositoryJpa;
     private final UserRepositoryJpa userRepository;
     private final ValidationService validationService;
@@ -177,13 +179,13 @@ public class ItemServiceImpl implements ItemService {
         User ownerFromBd = userRepository.findById(ownerId)
                 .orElseThrow(() -> new NotFoundRecordInBD("Ошибка при обновлении вещи с ID = " + itemId
                         + " пользователя с ID = " + ownerId + " в БД. В БД отсутствует запись о пользователе."));
-        List<Booking> allBookings = itemFromBd.getBookings();
+        List<Booking> allBookings = bookingRepositoryJpa.findAllByItemOrderByStartTimeDesc(itemFromBd);
+//        List<Booking> allBookings = itemFromBd.getBookings(); //Можно и так, но для тестов потребовался вариант выше.
         Booking lastBooking = null;
         Booking nextBooking = null;
         LocalDateTime now = LocalDateTime.now();
 
         ItemWithBookingAndCommentsDto itemWithBAndCDto = itemWithBAndCDtoMapper.mapToDto(itemFromBd);
-
         Long ownerIdForItemFromBd = itemFromBd.getOwner().getId();      //ID хозяина вещи из БД.
         if (ownerIdForItemFromBd.equals(ownerId) && allBookings != null) {
             nextBooking = findNextBookingByDate(allBookings, now);
@@ -192,7 +194,8 @@ public class ItemServiceImpl implements ItemService {
             itemWithBAndCDto.setLastBooking(bookingForItemDtoMapper.mapToDto(lastBooking));
         }
         List<CommentDto> commentDtoForResponse = null;
-        List<Comment> commentsFromDb = itemFromBd.getComments();
+        List<Comment> commentsFromDb = commentRepository.findAllByItemOrderById(itemFromBd);
+//      List<Comment> commentsFromDb = itemFromBd.getComments();//Можно и так, но для тестов потребовался вариант выше.
         if (commentsFromDb != null) {
             commentDtoForResponse = commentsFromDb.stream()
                     .map(commentDtoMapper::mapToDto).collect(Collectors.toList());
@@ -278,14 +281,10 @@ public class ItemServiceImpl implements ItemService {
 
         if (bookings != null && !bookings.isEmpty()) for (Booking b : bookings)
             if (b.getEndTime().isBefore(now)) {
-                if (last == null && (b.getBookingStatus().equals(BookingStatus.APPROVED)))
-                    last = b;
+                if (last == null && (b.getBookingStatus().equals(BookingStatus.APPROVED))) last = b;
                     //если last = null
-                else if (last == null)
-                    last = b;
-                else if (b.getEndTime().isAfter(last.getEndTime())) {
-                    last = b;
-                }
+                else if (last == null) last = b;
+                else if (b.getEndTime().isAfter(last.getEndTime())) last = b;
             }
         return last;
     }

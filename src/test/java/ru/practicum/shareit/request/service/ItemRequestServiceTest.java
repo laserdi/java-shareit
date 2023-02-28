@@ -154,7 +154,7 @@ class ItemRequestServiceTest {
      * <p>Список запросов, созданных другими пользователями за исключением userId.</p>
      */
     @Test
-    void getAllRequestForSee() {
+    void getAllRequestForSee_WhenAllIsOk() {
         UserDto savedRequesterDto = userService.addToStorage(requesterDto101);
         UserDto savedOwnerDto = userService.addToStorage(ownerDto1);
 
