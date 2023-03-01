@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.booking.dto.BookingForItemDto;
 import ru.practicum.shareit.booking.dto.BookingForResponse;
+import ru.practicum.shareit.booking.mapper.BookingForItemDtoMapper;
 import ru.practicum.shareit.booking.mapper.BookingForResponseBookingDtoMapper;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
@@ -17,10 +19,14 @@ import ru.practicum.shareit.booking.repository.BookingRepositoryJpa;
 import ru.practicum.shareit.exception.NotFoundRecordInBD;
 import ru.practicum.shareit.exception.UnsupportedStatusException;
 import ru.practicum.shareit.exception.ValidateException;
+import ru.practicum.shareit.item.dto.ItemForResponseDto;
+import ru.practicum.shareit.item.mapper.ItemForResponseDtoMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepositoryJpa;
 import ru.practicum.shareit.user.dto.UserForResponseDto;
+import ru.practicum.shareit.user.dto.UserOnlyWithIdDto;
 import ru.practicum.shareit.user.mapper.UserForResponseMapper;
+import ru.practicum.shareit.user.mapper.UserToUserOnlyWithIdDtoMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepositoryJpa;
 
@@ -30,7 +36,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @Transactional
 @SpringBootTest(
@@ -44,7 +51,10 @@ class BookingServiceTest {
     private BookingRepositoryJpa bookingRepositoryJpa;
     private final BookingMapper bookingMapper;
     private final BookingForResponseBookingDtoMapper bookingForResponseBookingDtoMapper;
+    private final BookingForItemDtoMapper bookingForItemDtoMapper;
     private final UserForResponseMapper userForResponseMapper;
+    private final UserToUserOnlyWithIdDtoMapper userToUserOnlyWithIdDtoMapper;
+    private final ItemForResponseDtoMapper itemForResponseDtoMapper;
     User user;
     UserForResponseDto userForResponse;
     User owner;
@@ -687,5 +697,110 @@ class BookingServiceTest {
         assertEquals(rejectedBooking.getStartTime(), result.get(0).getStartTime());
         assertEquals(rejectedBooking.getEndTime(), result.get(0).getEndTime());
         assertEquals(rejectedBooking.getBookingStatus(), result.get(0).getStatus());
+    }
+
+    @Test
+    void bookingForResponse_ToDto_whenAllIsOk() {
+        BookingForResponse bookingForResponse = bookingForResponseBookingDtoMapper.mapToDto(booking);
+        assertEquals(booking.getId(), bookingForResponse.getId());
+        assertEquals(booking.getItem().getName(), bookingForResponse.getItem().getName());
+        assertEquals(booking.getBooker().getId(), bookingForResponse.getBooker().getId());
+        assertEquals(booking.getStartTime(), bookingForResponse.getStartTime());
+        assertEquals(booking.getEndTime(), bookingForResponse.getEndTime());
+    }
+
+    @Test
+    void bookingForResponse_ToModel_whenAllIsOk() {
+        UserOnlyWithIdDto userOnlyWithIdDto = userToUserOnlyWithIdDtoMapper.mapToDto(user);
+        ItemForResponseDto itemForResponseDto = itemForResponseDtoMapper.mapToDto(item);
+        BookingForResponse bookingForResponse = BookingForResponse.builder().id(1L).booker(userOnlyWithIdDto)
+                .startTime(LocalDateTime.now()).endTime(LocalDateTime.now().minusSeconds(20))
+                .item(itemForResponseDto).status(BookingStatus.APPROVED).build();
+
+        booking = bookingForResponseBookingDtoMapper.mapToModel(bookingForResponse);
+    }
+
+    @Test
+    void bookingForResponse_ToModel_whenDtoIsNull() {
+        booking = bookingForResponseBookingDtoMapper.mapToModel(null);
+        assertNull(booking);
+    }
+
+    @Test
+    void bookingForResponse_ToDto_whenModelIsNull() {
+        BookingForResponse bookingForResponse = bookingForResponseBookingDtoMapper.mapToDto(null);
+        assertNull(bookingForResponse);
+    }
+
+    @Test
+    void bookingForItemDto_toModel_whenAllIsOk() {
+
+        BookingForItemDto bookingForItemDto = BookingForItemDto.builder().id(2L).bookerId(user.getId())
+                .startTime(LocalDateTime.now()).endTime(LocalDateTime.now().plusSeconds(2))
+                .status(BookingStatus.REJECTED).build();
+
+        Booking result = bookingForItemDtoMapper.mapToModel(bookingForItemDto);
+        assertEquals(bookingForItemDto.getId(), result.getId());
+        assertEquals(bookingForItemDto.getStatus(), result.getBookingStatus());
+        assertEquals(bookingForItemDto.getBookerId(), result.getBooker().getId());
+        assertEquals(bookingForItemDto.getStartTime(), result.getStartTime());
+        assertEquals(bookingForItemDto.getStatus(), result.getBookingStatus());
+    }
+
+    @Test
+    void bookingForItemDto_toModel_whenAllFieldsIsNull() {
+
+        BookingForItemDto bookingForItemDto = BookingForItemDto.builder().id(null).bookerId(null)
+                .startTime(null).endTime(null)
+                .status(null).build();
+
+        Booking result = bookingForItemDtoMapper.mapToModel(bookingForItemDto);
+        assertEquals(bookingForItemDto.getId(), result.getId());
+        assertEquals(bookingForItemDto.getStatus(), result.getBookingStatus());
+        assertEquals(bookingForItemDto.getBookerId(), result.getBooker().getId());
+        assertEquals(bookingForItemDto.getStartTime(), result.getStartTime());
+        assertEquals(bookingForItemDto.getStatus(), result.getBookingStatus());
+    }
+
+    @Test
+    void bookingForItemDto_toModel_whenItIsNull() {
+
+        BookingForItemDto bookingForItemDto = null;
+
+        Booking result = bookingForItemDtoMapper.mapToModel(bookingForItemDto);
+        assertNull(result);
+    }
+
+    @Test
+    void bookingForItemDto_toDto_whenAllIsOk() {
+
+        BookingForItemDto bookingForItemDto = BookingForItemDto.builder().id(2L).bookerId(user.getId())
+                .startTime(LocalDateTime.now()).endTime(LocalDateTime.now().plusSeconds(2))
+                .status(BookingStatus.REJECTED).build();
+
+        BookingForItemDto result = bookingForItemDtoMapper.mapToDto(booking);
+        assertEquals(booking.getId(), result.getId());
+        assertEquals(booking.getBooker().getId(), result.getBookerId());
+        assertEquals(booking.getStartTime(), result.getStartTime());
+        assertEquals(booking.getEndTime(), result.getEndTime());
+        assertEquals(booking.getBookingStatus(), result.getStatus());
+    }
+
+    @Test
+    void bookingForItemDto_toDto_whenAllFieldsAreNull() {
+        Booking booking1 = Booking.builder().id(null).booker(null)
+                .startTime(null).endTime(null)
+                .bookingStatus(null).build();
+
+        BookingForItemDto result = bookingForItemDtoMapper.mapToDto(booking1);
+        assertNotNull(result);
+
+        assertNotNull(result);
+        assertEquals(booking1.getId(), result.getId());
+        assertNull(booking1.getBooker());
+        assertNull(result.getBookerId());
+        assertEquals(booking1.getStartTime(), result.getStartTime());
+        assertEquals(booking1.getEndTime(), result.getEndTime());
+        assertEquals(booking1.getBookingStatus(), result.getStatus());
     }
 }

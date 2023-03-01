@@ -138,6 +138,61 @@ class UserServiceImplTest {
                 () -> userService.addToStorage(userDto1));
     }
 
+    @Test
+    void updateInStorage_whenAllIsOkAndNameIsNull_returnUpdatedUser() {
+        UserDto createdUser = userService.addToStorage(userDto1);
+
+        List<UserDto> beforeUpdateUsers = userService.getAllUsers();
+        Long id = beforeUpdateUsers.stream()
+                .filter(u -> u.getEmail().equals(userDto1.getEmail()))
+                .findFirst()
+                .map(UserDto::getId).orElse(null);
+        assertNotNull(id);
+        assertEquals(id, createdUser.getId());
+
+        UserDto userDtoFromDbBeforeUpdate = userService.getUserById(id);
+
+        assertEquals(userDtoFromDbBeforeUpdate.getName(), userDto1.getName());
+        assertEquals(userDtoFromDbBeforeUpdate.getEmail(), userDto1.getEmail());
+
+        userDto2.setId(createdUser.getId());
+        userDto2.setName(null);
+        userService.updateInStorage(userDto2);
+
+        UserDto userDtoFromDbAfterUpdate = userService.getUserById(id);
+
+        assertEquals(userDtoFromDbBeforeUpdate.getId(), userDtoFromDbAfterUpdate.getId());
+        assertEquals(userDtoFromDbAfterUpdate.getName(), userDto1.getName());
+        assertEquals(userDtoFromDbAfterUpdate.getEmail(), userDto2.getEmail());
+    }
+
+    @Test
+    void updateInStorage_whenAllIsOkAndEmailIsNull_returnUpdatedUser() {
+        UserDto createdUser = userService.addToStorage(userDto1);
+
+        List<UserDto> beforeUpdateUsers = userService.getAllUsers();
+        Long id = beforeUpdateUsers.stream()
+                .filter(u -> u.getEmail().equals(userDto1.getEmail()))
+                .findFirst()
+                .map(UserDto::getId).orElse(null);
+        assertNotNull(id);
+        assertEquals(id, createdUser.getId());
+
+        UserDto userDtoFromDbBeforeUpdate = userService.getUserById(id);
+
+        assertEquals(userDtoFromDbBeforeUpdate.getName(), userDto1.getName());
+        assertEquals(userDtoFromDbBeforeUpdate.getEmail(), userDto1.getEmail());
+
+        userDto2.setId(createdUser.getId());
+        userDto2.setEmail(null);
+        userService.updateInStorage(userDto2);
+
+        UserDto userDtoFromDbAfterUpdate = userService.getUserById(id);
+
+        assertEquals(userDtoFromDbBeforeUpdate.getId(), userDtoFromDbAfterUpdate.getId());
+        assertEquals(userDtoFromDbAfterUpdate.getName(), userDto2.getName());
+        assertEquals(userDtoFromDbAfterUpdate.getEmail(), userDto1.getEmail());
+    }
 
     @Test
     void updateInStorage_whenAllIsOk_returnUpdatedUser() {

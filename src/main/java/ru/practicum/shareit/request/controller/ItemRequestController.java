@@ -32,7 +32,7 @@ public class ItemRequestController {
         log.info("Добавление нового запроса вещи в БД. Запрос = {}", itemRequestDto);
         return itemRequestService.addItemRequest(requesterId, itemRequestDto);
     }
-        //(@RequestBody @Validated(CreateObject.class) UserDto userDto)
+    //(@RequestBody @Validated(CreateObject.class) UserDto userDto)
 
     /**
      * GET /requests — получить список своих запросов вместе с данными об ответах на них. Для каждого запроса
@@ -41,7 +41,8 @@ public class ItemRequestController {
      * Запросы должны возвращаться в отсортированном порядке от более новых к более старым.
      */
     @GetMapping
-    public List<ItemRequestDtoWithAnswers> getItemRequestsByUserId(@RequestHeader("X-Sharer-User-Id") Long requesterId) {
+    public List<ItemRequestDtoWithAnswers> getItemRequestsByUserId(
+            @RequestHeader("X-Sharer-User-Id") Long requesterId) {
         log.info("Получение списка запросов пользователя с ID = '{}'.", requesterId);
         return itemRequestService.getItemRequestsByUserId(requesterId);
     }
@@ -54,9 +55,10 @@ public class ItemRequestController {
      * элементов для отображения.
      */
     @GetMapping("/all")
-    public List<ItemRequestDtoWithAnswers> getAllRequests(@RequestHeader("X-Sharer-User-Id") Long requesterId,
-                                               @RequestParam(name = "from", defaultValue = "0") Integer from,
-                                               @RequestParam(name = "size", defaultValue = "20") Integer size) {
+    public List<ItemRequestDtoWithAnswers> getAllRequests(
+            @RequestHeader("X-Sharer-User-Id") Long requesterId,
+            @RequestParam(name = "from", defaultValue = "0") Integer from,
+            @RequestParam(name = "size", defaultValue = "20") Integer size) {
         log.info("Получение списка запросов, созданных другими пользователями кроме ID = '{}'.", requesterId);
         return itemRequestService.getAllRequestForSee(requesterId, from, size);
     }

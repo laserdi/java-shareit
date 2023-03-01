@@ -135,8 +135,9 @@ public class ItemServiceImpl implements ItemService {
      */
     @Override
     public ItemDto getItemById(Long itemId) {
-        return itemMapper.mapToDto(itemRepositoryJpa.findById(itemId).orElseThrow(()
-                -> new NotFoundRecordInBD("Error 404. Запись о вещи с Id = " + itemId + " не найдена в БД.")));
+        return itemMapper.mapToDto(itemRepositoryJpa.findById(itemId)
+                .orElseThrow(()
+                        -> new NotFoundRecordInBD("Error 404. Запись о вещи с Id = " + itemId + " не найдена в БД.")));
     }
 
 
@@ -217,7 +218,8 @@ public class ItemServiceImpl implements ItemService {
         User userFromBd = userRepository.findById(bookerId).orElseThrow(() ->
                 new NotFoundRecordInBD("Ошибка при сохранении комментария к вещи с ID = " + itemId
                         + " пользователем с ID = " + bookerId + " в БД. В БД отсутствует запись о пользователе."));
-        Item itemFromBd = itemRepositoryJpa.findById(itemId).orElseThrow(() ->
+        Item itemFromBd = itemRepositoryJpa.findById(
+                itemId).orElseThrow(() ->
                 new NotFoundRecordInBD("Ошибка при сохранении комментария к вещи с ID = " + itemId
                         + " пользователем с ID = " + bookerId + " в БД. В БД отсутствует запись о вещи."));
         List<Booking> bookings = itemFromBd.getBookings();

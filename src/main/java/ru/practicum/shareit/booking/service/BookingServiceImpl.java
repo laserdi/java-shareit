@@ -53,8 +53,9 @@ public class BookingServiceImpl implements BookingService {
         if (!itemFromDB.getAvailable()) {
             throw new ValidateException("Вещь нельзя забронировать, поскольку available = false.");
         }
-        User bookerFromDb = userRepositoryJpa.findById(bookerId).orElseThrow(() -> new NotFoundRecordInBD("При " +
-                "создании бронирования не найден пользователь с ID = " + bookerId + " в БД."));
+        User bookerFromDb = userRepositoryJpa.findById(bookerId)
+                .orElseThrow(() -> new NotFoundRecordInBD("При создании бронирования не найден пользователь " +
+                        "с ID = " + bookerId + " в БД."));
 
         validateBooking(bookingDto, itemFromDB, bookerFromDb);
         bookingDto.setBookingStatus(BookingStatus.WAITING);

@@ -11,7 +11,7 @@ public interface ItemForResponseDtoMapper {
     /**
      * Из объекта для ответа в контроллере в юзера.
      */
-    Item mapToModel(ItemForResponseDto itemDto);
+//    Item mapToModel(ItemForResponseDto itemDto);
 
     /**
      * Из юзера в объект для ответа в контроллере.

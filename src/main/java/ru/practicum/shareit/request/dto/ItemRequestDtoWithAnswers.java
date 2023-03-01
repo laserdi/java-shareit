@@ -14,7 +14,7 @@ import java.util.List;
 @ToString
 @RequiredArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 @EqualsAndHashCode
 public class ItemRequestDtoWithAnswers {
     Long id;                //уникальный идентификатор запроса;

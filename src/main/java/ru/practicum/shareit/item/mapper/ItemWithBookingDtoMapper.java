@@ -12,7 +12,7 @@ public interface ItemWithBookingDtoMapper {
      * Из объекта для ответа в вещь.
      */
 
-    Item mapToModel(ItemWithBookingDto itemWithBookingDto);
+//    Item mapToModel(ItemWithBookingDto itemWithBookingDto);
 
     /**
      * Из вещи в объект для ответа.

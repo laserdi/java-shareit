@@ -185,6 +185,8 @@ class ItemServiceTest {
                 .build();
 
         commentDto = CommentDto.builder()
+                .id(1L)
+                .createdDate(now)
                 .content("comment 1")
                 .authorName(userForTest.getName())
                 .build();
@@ -268,6 +270,36 @@ class ItemServiceTest {
         assertEquals(savedItemDtoBeforeUpd.getAvailable(), savedUpdItem.getAvailable());
     }
 
+    ///////////////////////////////////////////////////////////////////
+    @Test
+    void updateInStorage_whenAllFildsItemIsNull_returnItemFromDb() {
+        UserDto savedOwnerDto1 = userService.addToStorage(ownerDto1);
+        ItemDto savedItemDtoBeforeUpd = itemService.add(itemDto1, savedOwnerDto1.getId());
+        List<ItemWithBookingAndCommentsDto> itemDtos = itemService.getItemsByUserId(savedOwnerDto1.getId());
+
+        assertEquals(1, itemDtos.size());
+        assertEquals(savedItemDtoBeforeUpd.getId(), itemDtos.get(0).getId());
+        assertEquals(savedItemDtoBeforeUpd.getName(), itemDtos.get(0).getName());
+        assertEquals(savedItemDtoBeforeUpd.getDescription(), itemDtos.get(0).getDescription());
+        assertEquals(savedItemDtoBeforeUpd.getRequestId(), itemDtos.get(0).getRequestId());
+        assertEquals(savedItemDtoBeforeUpd.getAvailable(), itemDtos.get(0).getAvailable());
+
+        ItemDto updatedItem = savedItemDtoBeforeUpd.toBuilder()
+                .name(null)
+                .description(null)
+                .requestId(null)
+                .available(null).build();
+
+        ItemDto savedUpdItem =
+                itemService.updateInStorage(savedItemDtoBeforeUpd.getId(), updatedItem, savedOwnerDto1.getId());
+
+        assertEquals(savedItemDtoBeforeUpd.getName(), savedUpdItem.getName());
+        assertEquals(savedItemDtoBeforeUpd.getDescription(), savedUpdItem.getDescription());
+        assertEquals(savedItemDtoBeforeUpd.getId(), savedUpdItem.getId());
+        assertEquals(savedItemDtoBeforeUpd.getRequestId(), savedUpdItem.getRequestId());
+        assertEquals(savedItemDtoBeforeUpd.getAvailable(), savedUpdItem.getAvailable());
+    }
+
     @Test
     void updateInStorage_whenUpdatedItemHasOtherUser_returnNotFoundRecordInBD() {
         UserDto savedOwnerDto1 = userService.addToStorage(ownerDto1);
@@ -282,6 +314,16 @@ class ItemServiceTest {
         assertThrows(NotFoundRecordInBD.class,
                 () -> itemService.updateInStorage(savedItemDtoBeforeUpd.getId(),
                         updatedItem, savedOwnerDto1.getId()));
+    }
+
+    @Test
+    void updateInStorage_whenItemNotFoundInDb_returnNotFoundRecordInBD() {
+        UserDto savedOwnerDto1 = userService.addToStorage(ownerDto1);
+        Long itemId = 1001L;
+        NotFoundRecordInBD ex = assertThrows(NotFoundRecordInBD.class,
+                () -> itemService.updateInStorage(itemId, itemDto1, savedOwnerDto1.getId()));
+        assertEquals(String.format("Ошибка при обновлении вещи с ID = %d пользователя с ID = %d " +
+                "в БД. В БД отсутствует запись о вещи.", itemId, savedOwnerDto1.getId()), ex.getMessage());
     }
 
     @Test
@@ -369,7 +411,6 @@ class ItemServiceTest {
         assertEquals(savedBooker.getEmail(), booker.getEmail());
 
 
-
         UserDto savedOwnerDto1 = userService.addToStorage(ownerDto1);
         owner1.setId(savedOwnerDto1.getId());     //запись полученного ID.
         ownerDto1.setId(savedOwnerDto1.getId());  //запись полученного ID.
@@ -422,7 +463,7 @@ class ItemServiceTest {
     }
 
     @Test
-    void getItemWithBookingAndComment_when() {
+    void getItemWithBookingAndComment_whenAllIsOk_returnItemWithBookingAndCommentsDto() {
         UserDto savedBooker = userService.addToStorage(bookerDto);
         booker.setId(savedBooker.getId());  //запись полученного ID.
         bookerDto.setId(savedBooker.getId());  //запись полученного ID.
@@ -502,9 +543,30 @@ class ItemServiceTest {
         bookingService.createBooking(savedUser2.getId(), bookingDto1);
 
         //Пользователь не арендовал эту вещь.
-        Assertions.assertThrows(ValidateException.class, () -> {
-            itemService.saveComment(savedUser1.getId(), savedItem.getId(), commentDto);
-        });
+        ValidateException ex = Assertions.assertThrows(ValidateException.class,
+                () -> itemService.saveComment(savedUser1.getId(), savedItem.getId(), commentDto));
+        assertEquals(String.format("Ошибка при сохранении комментария к вещи с ID = %d пользователем с ID " +
+                        "= %d в БД. Пользователь не арендовал эту вещь.", savedItem.getId(), savedUser1.getId()),
+                ex.getMessage());
+    }
+
+    @Test
+    void saveComment_whenItemNotFound_thenReturnNotFoundRecordInDb() {
+        UserDto savedUser1 = userService.addToStorage(ownerDto1);
+        UserDto savedUser2 = userService.addToStorage(userDtoForTest);
+//        ItemDto savedItem = itemService.add(itemDto1, savedUser1.getId());
+        CommentDto commentDto = CommentDto.builder()
+                .authorName(savedUser2.getName())
+                .content("comment from user 1")
+                .createdDate(now)
+                .build();
+        Long notFoundItemId = 1001L;
+        //Пользователь не арендовал эту вещь.
+        NotFoundRecordInBD ex = Assertions.assertThrows(NotFoundRecordInBD.class,
+                () -> itemService.saveComment(savedUser1.getId(), notFoundItemId, commentDto));
+        assertEquals(String.format("Ошибка при сохранении комментария к вещи с ID = %d пользователем с ID " +
+                        "= %d в БД. В БД отсутствует запись о вещи.",
+                notFoundItemId, savedUser1.getId()), ex.getMessage());
     }
 
     /**
@@ -593,7 +655,9 @@ class ItemServiceTest {
                 .createdDate(now.minusDays(5))
                 .build();
 
-        assertThrows(ValidateException.class, () -> itemService.saveComment(1L, 1L, commentDto));
+        ValidateException ex = assertThrows(ValidateException.class,
+                () -> itemService.saveComment(1L, 1L, commentDto));
+        assertEquals("Текст комментария не может быть пустым.", ex.getMessage());
     }
 
     @Test
@@ -607,4 +671,139 @@ class ItemServiceTest {
 
         assertThrows(NotFoundRecordInBD.class, () -> itemService.saveComment(1000L, 1L, commentDto));
     }
+
+    @Test
+    void saveComment_when() {
+        CommentDto inputCommentDto = CommentDto.builder().id(1L).content("new comment for test").build();
+
+        User owner2 = User.builder()
+                .id(2L)
+                .name("name for owner")
+                .email("owner2@aadmf.wreew")
+                .build();
+
+        User userForTest2 = User.builder()
+                .id(1L)
+                .name("name user for test 2")
+                .email("userForTest2@ahd.ew")
+                .build();
+
+        Item zaglushka = Item.builder().id(1L).name("zaglushka").description("desc item zaglushka")
+                .owner(owner2).build();
+
+        Booking bookingFromBd = Booking.builder()
+                .id(1L)
+                .item(zaglushka)
+                .booker(userForTest2)
+                .startTime(now.minusDays(10))
+                .endTime(now.minusDays(5))
+                .build();///
+
+        Item itemFromBd = Item.builder()
+                .id(1L)
+                .name("name for item")
+                .description("desc for item")
+                .owner(owner2)
+                .available(true)
+                .bookings(List.of(bookingFromBd))
+                .build();///
+
+        CommentDto commentDto = CommentDto.builder()
+                .id(1L)
+                .content("comment 1")
+                .authorName("name user for test 2")
+                .createdDate(now.minusDays(5))
+                .build();
+
+        Comment outputComment = Comment.builder()
+                .id(1L)
+                .author(userForTest2)
+                .content("comment 1")
+                .item(itemFromBd)
+                .build();
+
+        UserRepositoryJpa userRepositoryJpa2 = mock(UserRepositoryJpa.class);
+        ItemRepositoryJpa itemRepositoryJpa2 = mock(ItemRepositoryJpa.class);
+        CommentRepository commentRepository2 = mock(CommentRepository.class);
+        ValidationService validationService2 = mock(ValidationService.class);
+        ItemService itemService2 = new ItemServiceImpl(bookingRepositoryJpa, itemRepositoryJpa2, userRepositoryJpa2, validationService2,
+                itemMapper, bookingForItemDtoMapper, commentRepository2, itemWithBAndCDtoMapper, commentDtoMapper);
+
+        when(userRepositoryJpa2.findById(any()))
+                .thenReturn(Optional.of(userForTest2));
+        when(itemRepositoryJpa2.findById(any()))
+                .thenReturn(Optional.of(itemFromBd));
+        when(commentRepository2.save(any()))
+                .thenReturn(outputComment);
+
+        CommentDto outputCommentDto =
+                itemService2.saveComment(userForTest2.getId(), itemFromBd.getId(), inputCommentDto);
+
+        assertEquals(commentDto.getContent(), outputCommentDto.getContent());
+        assertEquals(commentDto.getAuthorName(), outputCommentDto.getAuthorName());
+        assertEquals(commentDto.getId(), outputCommentDto.getId());
+        assertNotEquals(commentDto.getCreatedDate(), outputCommentDto.getCreatedDate());
+
+    }
+
+    @Test
+    void commentToDto_whenCommentIsOk_returnCommentDto() {
+        Comment comment = Comment.builder()
+                .id(0L)
+                .author(booker)
+                .createdDate(now)
+                .content("comment").build();
+        CommentDto commentDto1 = commentDtoMapper.mapToDto(comment);
+        assertEquals(comment.getId(), commentDto1.getId());
+        assertEquals(comment.getContent(), commentDto1.getContent());
+        assertEquals(comment.getAuthor().getName(), commentDto1.getAuthorName());
+        assertEquals(comment.getCreatedDate(), commentDto1.getCreatedDate());
+    }
+
+    @Test
+    void commentToDto_whenAuthorCommentIsNullAndCreatedDateIsNull() {
+        Comment comment = Comment.builder()
+                .id(0L)
+                .author(null)
+                .createdDate(null)
+                .content("comment").build();
+        CommentDto commentDto1 = commentDtoMapper.mapToDto(comment);
+        assertEquals(comment.getId(), commentDto1.getId());
+        assertEquals(comment.getContent(), commentDto1.getContent());
+        assertEquals(comment.getAuthor(), commentDto1.getAuthorName());
+        assertEquals(comment.getCreatedDate(), commentDto1.getCreatedDate());
+    }
+
+    @Test
+    void commentToDto_whenAuthorIsNullAndCreatedDateIsNull() {
+        Comment comment = Comment.builder()
+                .id(0L)
+                .author(null)
+                .createdDate(null)
+                .content("comment").build();
+        CommentDto commentDto1 = commentDtoMapper.mapToDto(comment);
+        assertEquals(comment.getId(), commentDto1.getId());
+        assertEquals(comment.getContent(), commentDto1.getContent());
+        assertEquals(comment.getCreatedDate(), commentDto1.getCreatedDate());
+        assertNull(comment.getAuthor());
+        assertNull(commentDto1.getAuthorName());
+    }
+
+    @Test
+    void commentToDto_whenCommentIsNull() {
+        Comment comment = null;
+        CommentDto commentDto1 = commentDtoMapper.mapToDto(comment);
+        assertNull(commentDto1);
+    }
+
+//    0
+@Test
+void dtoToModel_whenAuthorIsNullAndCreatedDateIsNull() {
+        commentDto.setAuthorName(null);
+    Comment comment1 = commentDtoMapper.mapToModel(commentDto);
+    assertEquals(commentDto.getId(), comment1.getId());
+    assertEquals(commentDto.getContent(), comment1.getContent());
+    assertEquals(commentDto.getCreatedDate(), comment1.getCreatedDate());
+    assertEquals(commentDto.getAuthorName(), comment1.getAuthor().getName());
+}
 }

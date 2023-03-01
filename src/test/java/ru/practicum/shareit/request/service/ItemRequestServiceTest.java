@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.exception.NotFoundRecordInBD;
 import ru.practicum.shareit.exception.ValidateException;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.dto.ItemRequestDtoWithAnswers;
 import ru.practicum.shareit.request.model.ItemRequest;
@@ -32,13 +32,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class ItemRequestServiceTest {
     private final ItemRequestService itemRequestService;
     private final UserService userService;
-    private final ItemService itemService;
     private final UserForResponseMapper userForResponseMapper;
     private final EntityManager em;
 
 
     ItemRequest itemRequest1;
-    ItemRequest itemRequest2;
     UserDto ownerDto1;
     UserDto requesterDto101;
     User owner1;
@@ -123,9 +121,17 @@ class ItemRequestServiceTest {
     }
 
     @Test
-    void addItemRequest_whenRequesterIdIsNull_returnValidateException() {
-        assertThrows(ValidateException.class,
-                () -> itemRequestService.addItemRequest(null, itemRequestDto1));
+    void addItemRequest_whenRequesterIdIsNull_returnNotFoundRecordInBD() {
+        Long requesterId = 1001L;
+        assertThrows(NotFoundRecordInBD.class,
+                () -> itemRequestService.addItemRequest(requesterId, itemRequestDto1));
+    }
+
+    @Test
+    void addItemRequest_whenRequesterNotFound_returnValidateException() {
+        Long requesterId = 1001L;
+        assertThrows(NotFoundRecordInBD.class,
+                () -> itemRequestService.addItemRequest(requesterId, itemRequestDto1));
     }
 
 
@@ -147,6 +153,15 @@ class ItemRequestServiceTest {
         assertEquals(savedItemRequest.getRequester().getName(), itemsFromDb.get(0).getRequester().getName());
         assertEquals(savedItemRequest.getCreated(), itemsFromDb.get(0).getCreated());
         assertEquals(itemRequestDto1.getDescription(), itemsFromDb.get(0).getDescription());
+    }
+
+    @Test
+    void getItemRequestsByUserId_whenUserNotFound_returnNotFoundRecordInDb() {
+        Long requesterId = 1001L;
+        NotFoundRecordInBD ex = assertThrows(NotFoundRecordInBD.class,
+                () -> itemRequestService.getItemRequestsByUserId(requesterId));
+        assertEquals(String.format("При выдаче списка запросов пользователя (ID = '%d"
+                + "') этот пользователь не найден в БД.", requesterId), ex.getMessage());
     }
 
     /**
@@ -199,6 +214,15 @@ class ItemRequestServiceTest {
     }
 
     @Test
+    void getAllRequestForSee_whenRequesterNotFound_returnNotFoundRecordInDb() {
+        Long requesterId = 1001L;
+        NotFoundRecordInBD ex = assertThrows(NotFoundRecordInBD.class,
+                () -> itemRequestService.getAllRequestForSee(requesterId, 0, 5));
+        assertEquals(String.format("Произошла ошибка при выдаче списка всех запросов кроме запросов " +
+                "пользователя (ID = '%d'). Этот пользователь не найден в БД.", requesterId), ex.getMessage());
+    }
+
+    @Test
     void getItemRequestById_whenAllIsOk_returnItemRequestDtoWithAnswers() {
         UserDto savedRequesterDto = userService.addToStorage(requesterDto101);
         UserDto savedOwnerDto = userService.addToStorage(ownerDto1);
@@ -244,6 +268,24 @@ class ItemRequestServiceTest {
         ValidateException ex = assertThrows(ValidateException.class,
                 () -> itemRequestService.getItemRequestById(savedRequesterDto.getId(), null));
         assertEquals("При попытке выдачи запроса по ID передан не правильный ID, равный null.",
+                ex.getMessage());
+    }
+
+    @Test
+    void getItemRequestById_whenRequestNotFound_returnNotFoundRecordInBD() {
+        UserDto savedRequesterDto = userService.addToStorage(requesterDto101);
+        Long requestId = 1001L;
+        NotFoundRecordInBD ex = assertThrows(NotFoundRecordInBD.class,
+                () -> itemRequestService.getItemRequestById(savedRequesterDto.getId(), requestId));
+        assertEquals("При попытке выдачи запроса по ID этот запрос не найден .",
+                ex.getMessage());
+    }
+
+    @Test
+    void getItemRequestById_whenUserNotFound_returnNotFoundRecordInBD() {
+        NotFoundRecordInBD ex = assertThrows(NotFoundRecordInBD.class,
+                () -> itemRequestService.getItemRequestById(1001L, 1L));
+        assertEquals("При попытке выдачи запроса по ID в БД не найден пользователь, сделавший запрос.",
                 ex.getMessage());
     }
 }
