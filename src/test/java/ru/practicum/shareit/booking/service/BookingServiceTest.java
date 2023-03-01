@@ -803,4 +803,46 @@ class BookingServiceTest {
         assertEquals(booking1.getEndTime(), result.getEndTime());
         assertEquals(booking1.getBookingStatus(), result.getStatus());
     }
+
+    /**
+     * Booking - BookingDto
+     */
+    @Test
+    void booking_to_BookingDto_wheAllIsOk_returnBookingDto() {
+        bookingDto = bookingMapper.mapToDto(booking);
+        assertEquals(booking.getItem().getId(), bookingDto.getItemId());
+        assertEquals(booking.getId(), bookingDto.getId());
+        assertEquals(booking.getStartTime(), bookingDto.getStartTime());
+        assertEquals(booking.getEndTime(), bookingDto.getEndTime());
+        assertEquals(booking.getBooker().getName(), bookingDto.getBooker().getName());
+        assertEquals(booking.getBooker().getId(), bookingDto.getBooker().getId());
+        assertEquals(booking.getBookingStatus(), bookingDto.getBookingStatus());
+    }
+
+    @Test
+    void booking_to_BookingDto_wheAllFieldsAreNull_returnBookingDto() {
+        booking = booking.toBuilder().id(null).item(null).startTime(null).endTime(null).booker(null)
+                .bookingStatus(null).build();
+        bookingDto = bookingMapper.mapToDto(booking);
+        assertNull(bookingDto.getId());
+        assertNull(bookingDto.getItemId());
+        assertNull(bookingDto.getStartTime());
+        assertNull(bookingDto.getEndTime());
+        assertNull(bookingDto.getBooker());
+        assertNull(bookingDto.getBookingStatus());
+    }
+
+    @Test
+    void bookingDto_to_Booking_wheAllFieldsAreNull_returnBookingDto() {
+        bookingDto = bookingDto.toBuilder().id(null).itemId(null).startTime(null).endTime(null).booker(null)
+                .bookingStatus(null).build();
+        booking = bookingMapper.mapToModel(bookingDto);
+        assertNull(booking.getId());
+        assertNull(booking.getItem().getId());
+        assertNull(booking.getItem().getName());
+        assertNull(booking.getStartTime());
+        assertNull(booking.getEndTime());
+        assertNull(booking.getBooker());
+        assertNull(booking.getBookingStatus());
+    }
 }

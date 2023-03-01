@@ -2,7 +2,6 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -272,7 +271,7 @@ class ItemServiceTest {
 
     ///////////////////////////////////////////////////////////////////
     @Test
-    void updateInStorage_whenAllFildsItemIsNull_returnItemFromDb() {
+    void updateInStorage_whenAllFieldsItemIsNull_returnItemFromDb() {
         UserDto savedOwnerDto1 = userService.addToStorage(ownerDto1);
         ItemDto savedItemDtoBeforeUpd = itemService.add(itemDto1, savedOwnerDto1.getId());
         List<ItemWithBookingAndCommentsDto> itemDtos = itemService.getItemsByUserId(savedOwnerDto1.getId());
@@ -510,6 +509,18 @@ class ItemServiceTest {
     }
 
     @Test
+    void getItemWithBookingAndComment_whenOwnerNotFound_returnNotFoundRecordInBD() {
+        UserDto savedOwnerDto1 = userService.addToStorage(ownerDto1);
+        ItemDto savedItemDto01 = itemService.add(itemDto1, savedOwnerDto1.getId());
+        Long ownerId = 1001L;
+
+        NotFoundRecordInBD ex = assertThrows(NotFoundRecordInBD.class, () ->
+                itemService.getItemWithBookingAndComment(savedItemDto01.getId(), ownerId));
+        assertEquals(String.format("Ошибка при обновлении вещи с ID = %d пользователя с ID = %d в БД. В БД " +
+                "отсутствует запись о пользователе.", savedItemDto01.getId(), ownerId), ex.getMessage());
+    }
+
+    @Test
     void saveComment_thenReturnExceptions() {
         UserDto savedUser1 = userService.addToStorage(ownerDto1);
         UserDto savedUser2 = userService.addToStorage(userDtoForTest);
@@ -530,11 +541,11 @@ class ItemServiceTest {
 
         BookingForResponse savedBookingDto;
         //Хозяин не может арендовать свою вещь.
-        Assertions.assertThrows(NotFoundRecordInBD.class, () -> {
+        assertThrows(NotFoundRecordInBD.class, () -> {
             bookingService.createBooking(savedUser1.getId(), bookingDto1);
         });
         //Дата аренды не может быть в прошлом.
-        Assertions.assertThrows(ValidateException.class, () -> {
+        assertThrows(ValidateException.class, () -> {
             bookingService.createBooking(savedUser2.getId(), bookingDto1);
         });
 
@@ -543,7 +554,7 @@ class ItemServiceTest {
         bookingService.createBooking(savedUser2.getId(), bookingDto1);
 
         //Пользователь не арендовал эту вещь.
-        ValidateException ex = Assertions.assertThrows(ValidateException.class,
+        ValidateException ex = assertThrows(ValidateException.class,
                 () -> itemService.saveComment(savedUser1.getId(), savedItem.getId(), commentDto));
         assertEquals(String.format("Ошибка при сохранении комментария к вещи с ID = %d пользователем с ID " +
                         "= %d в БД. Пользователь не арендовал эту вещь.", savedItem.getId(), savedUser1.getId()),
@@ -562,7 +573,7 @@ class ItemServiceTest {
                 .build();
         Long notFoundItemId = 1001L;
         //Пользователь не арендовал эту вещь.
-        NotFoundRecordInBD ex = Assertions.assertThrows(NotFoundRecordInBD.class,
+        NotFoundRecordInBD ex = assertThrows(NotFoundRecordInBD.class,
                 () -> itemService.saveComment(savedUser1.getId(), notFoundItemId, commentDto));
         assertEquals(String.format("Ошибка при сохранении комментария к вещи с ID = %d пользователем с ID " +
                         "= %d в БД. В БД отсутствует запись о вещи.",
@@ -796,14 +807,35 @@ class ItemServiceTest {
         assertNull(commentDto1);
     }
 
-//    0
-@Test
-void dtoToModel_whenAuthorIsNullAndCreatedDateIsNull() {
+    //
+    @Test
+    void dtoToModel_whenAuthorIsNullAndCreatedDateIsNull() {
         commentDto.setAuthorName(null);
-    Comment comment1 = commentDtoMapper.mapToModel(commentDto);
-    assertEquals(commentDto.getId(), comment1.getId());
-    assertEquals(commentDto.getContent(), comment1.getContent());
-    assertEquals(commentDto.getCreatedDate(), comment1.getCreatedDate());
-    assertEquals(commentDto.getAuthorName(), comment1.getAuthor().getName());
-}
+        Comment comment1 = commentDtoMapper.mapToModel(commentDto);
+        assertEquals(commentDto.getId(), comment1.getId());
+        assertEquals(commentDto.getContent(), comment1.getContent());
+        assertEquals(commentDto.getCreatedDate(), comment1.getCreatedDate());
+        assertEquals(commentDto.getAuthorName(), comment1.getAuthor().getName());
+    }
+
+    @Test
+    void itemWithBookingAndCommentsDto_whenItemIsNull_returnNull() {
+        ItemWithBookingAndCommentsDto result = itemWithBAndCDtoMapper.mapToDto(null);
+        assertNull(result);
+    }
+
+    @Test
+    void itemWithBookingAndCommentsDto_mapToDto_whenAllIsOkWithComments_returnItemWithBookingAndCommentsDto() {
+        Comment comment1 = Comment.builder().id(1L).item(item1).createdDate(now.minusDays(1))
+                .content("desc comment 1").author(userForTest).build();
+        item1.setComments(List.of(comment1));
+
+        ItemWithBookingAndCommentsDto result = itemWithBAndCDtoMapper.mapToDto(item1);
+
+        assertEquals(item1.getId(), result.getId());
+        assertEquals(item1.getDescription(), result.getDescription());
+        assertEquals(item1.getAvailable(), result.getAvailable());
+        assertEquals(item1.getComments().size(), result.getFeedbacks().size());
+    }
+
 }
