@@ -7,7 +7,14 @@ import lombok.*;
 @ToString
 @RequiredArgsConstructor
 @AllArgsConstructor
+@Builder
 public class UserForResponseDto {
-    private Long id;        //ID пользователя.
-    private String name;    //Имя пользователя.
+    /**
+     * ID пользователя.
+     */
+    private Long id;
+    /**
+     * Имя пользователя
+     */
+    private String name;
 }

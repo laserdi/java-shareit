@@ -13,8 +13,8 @@ public interface ItemWithBookingAndCommentsDtoMapper {
      * Из объекта для ответа в вещь.
      */
 
-    @Mapping(source = "feedbacks", target = "comments")
-    Item mapToModel(ItemWithBookingAndCommentsDto itemWithBookingAndCommentsDto);
+//    @Mapping(source = "feedbacks", target = "comments")
+//    Item mapToModel(ItemWithBookingAndCommentsDto itemWithBookingAndCommentsDto);
 
     /**
      * Из вещи в объект для ответа.

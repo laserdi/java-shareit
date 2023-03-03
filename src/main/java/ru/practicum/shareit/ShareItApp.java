@@ -8,9 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class ShareItApp {
     public static void main(String[] args) {
         SpringApplication.run(ShareItApp.class, args);
-        System.out.println("*".repeat(134) + "\n" + "*".repeat(40) + "       Спринт №15. " +
-                "Add-Bookings. Сервер запущен.      "
-                + "*".repeat(40) + "\n" + "*".repeat(134));
+        System.out.println("*".repeat(134) + "\n" + "*".repeat(40) + "       Спринт №15. Add-Bookings. Сервер запущен.      " + "*".repeat(40) + "\n" + "*".repeat(134));
 
     }
 }

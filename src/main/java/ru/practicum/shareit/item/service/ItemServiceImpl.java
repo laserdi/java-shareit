@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.mapper.BookingForItemDtoMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatus;
+import ru.practicum.shareit.booking.repository.BookingRepositoryJpa;
 import ru.practicum.shareit.exception.NotFoundRecordInBD;
 import ru.practicum.shareit.exception.ValidateException;
 import ru.practicum.shareit.item.comment.dto.CommentDto;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class ItemServiceImpl implements ItemService {
+    private final BookingRepositoryJpa bookingRepositoryJpa;
     private final ItemRepositoryJpa itemRepositoryJpa;
     private final UserRepositoryJpa userRepository;
     private final ValidationService validationService;
@@ -133,8 +135,9 @@ public class ItemServiceImpl implements ItemService {
      */
     @Override
     public ItemDto getItemById(Long itemId) {
-        return itemMapper.mapToDto(itemRepositoryJpa.findById(itemId).orElseThrow(()
-                -> new NotFoundRecordInBD("Error 404. Запись о вещи с Id = " + itemId + " не найдена в БД.")));
+        return itemMapper.mapToDto(itemRepositoryJpa.findById(itemId)
+                .orElseThrow(()
+                        -> new NotFoundRecordInBD("Error 404. Запись о вещи с Id = " + itemId + " не найдена в БД.")));
     }
 
 
@@ -143,8 +146,8 @@ public class ItemServiceImpl implements ItemService {
      * @param itemId ID удаляемой вещи.
      */
     @Override
-    public ItemDto removeItemById(Long itemId) {
-        return null;
+    public void removeItemById(Long itemId) {
+        itemRepositoryJpa.deleteById(itemId);
     }
 
     /**
@@ -177,22 +180,27 @@ public class ItemServiceImpl implements ItemService {
         User ownerFromBd = userRepository.findById(ownerId)
                 .orElseThrow(() -> new NotFoundRecordInBD("Ошибка при обновлении вещи с ID = " + itemId
                         + " пользователя с ID = " + ownerId + " в БД. В БД отсутствует запись о пользователе."));
-        List<Booking> allBookings = itemFromBd.getBookings();
+        List<Booking> allBookings = bookingRepositoryJpa.findAllByItemOrderByStartTimeDesc(itemFromBd);
+//        List<Booking> allBookings = itemFromBd.getBookings(); //Можно и так, но для тестов потребовался вариант выше.
         Booking lastBooking = null;
         Booking nextBooking = null;
         LocalDateTime now = LocalDateTime.now();
 
+        ItemWithBookingAndCommentsDto itemWithBAndCDto = itemWithBAndCDtoMapper.mapToDto(itemFromBd);
         Long ownerIdForItemFromBd = itemFromBd.getOwner().getId();      //ID хозяина вещи из БД.
         if (ownerIdForItemFromBd.equals(ownerId) && allBookings != null) {
             nextBooking = findNextBookingByDate(allBookings, now);
             lastBooking = findLastBookingByDate(allBookings, now);
+            itemWithBAndCDto.setNextBooking(bookingForItemDtoMapper.mapToDto(nextBooking));
+            itemWithBAndCDto.setLastBooking(bookingForItemDtoMapper.mapToDto(lastBooking));
         }
-        ItemWithBookingAndCommentsDto itemWithBAndCDto = itemWithBAndCDtoMapper.mapToDto(itemFromBd);
-        itemWithBAndCDto.setNextBooking(bookingForItemDtoMapper.mapToDto(nextBooking));
-        itemWithBAndCDto.setLastBooking(bookingForItemDtoMapper.mapToDto(lastBooking));
-        List<Comment> commentsFromDb = itemFromBd.getComments();
-        List<CommentDto> commentDtoForResponse = commentsFromDb.stream()
-                .map(commentDtoMapper::mapToDto).collect(Collectors.toList());
+        List<CommentDto> commentDtoForResponse = null;
+        List<Comment> commentsFromDb = commentRepository.findAllByItemOrderById(itemFromBd);
+//      List<Comment> commentsFromDb = itemFromBd.getComments();//Можно и так, но для тестов потребовался вариант выше.
+        if (commentsFromDb != null) {
+            commentDtoForResponse = commentsFromDb.stream()
+                    .map(commentDtoMapper::mapToDto).collect(Collectors.toList());
+        }
         itemWithBAndCDto.setFeedbacks(commentDtoForResponse);
         return itemWithBAndCDto;
     }
@@ -210,19 +218,24 @@ public class ItemServiceImpl implements ItemService {
         User userFromBd = userRepository.findById(bookerId).orElseThrow(() ->
                 new NotFoundRecordInBD("Ошибка при сохранении комментария к вещи с ID = " + itemId
                         + " пользователем с ID = " + bookerId + " в БД. В БД отсутствует запись о пользователе."));
-        Item itemFromBd = itemRepositoryJpa.findById(itemId).orElseThrow(() ->
+        Item itemFromBd = itemRepositoryJpa.findById(
+                itemId).orElseThrow(() ->
                 new NotFoundRecordInBD("Ошибка при сохранении комментария к вещи с ID = " + itemId
                         + " пользователем с ID = " + bookerId + " в БД. В БД отсутствует запись о вещи."));
         List<Booking> bookings = itemFromBd.getBookings();
 
         boolean isBooker = false;
-        for (Booking b : bookings) {
-            Long bookerIdFromBooking = b.getBooker().getId();
-            if (bookerIdFromBooking.equals(bookerId) && b.getEndTime().isBefore(LocalDateTime.now())) {
-                isBooker = true;
-                break;
+
+        if (bookings != null) {
+            for (Booking b : bookings) {
+                Long bookerIdFromBooking = b.getBooker().getId();
+                if (bookerIdFromBooking.equals(bookerId) && b.getEndTime().isBefore(LocalDateTime.now())) {
+                    isBooker = true;
+                    break;
+                }
             }
         }
+
         if (!isBooker) {
             throw new ValidateException("Ошибка при сохранении комментария к вещи с ID = " + itemId
                     + " пользователем с ID = " + bookerId + " в БД. Пользователь не арендовал эту вещь.");
@@ -231,7 +244,9 @@ public class ItemServiceImpl implements ItemService {
         commentForSave.setItem(itemFromBd);
         commentForSave.setAuthor(userFromBd);
         commentForSave.setCreatedDate(LocalDateTime.now());
-        return commentDtoMapper.mapToDto(commentRepository.save(commentForSave));
+        Comment resComment = commentRepository.save(commentForSave);
+        CommentDto result = commentDtoMapper.mapToDto(resComment);
+        return result;
     }
 
     /**
@@ -243,20 +258,16 @@ public class ItemServiceImpl implements ItemService {
     private Booking findNextBookingByDate(List<Booking> bookings, LocalDateTime now) {
         Booking first = null;
         if (bookings != null && !bookings.isEmpty()) {
-            for (Booking b : bookings) {
+            for (Booking b : bookings)
                 if (b.getStartTime().isAfter(now)) {
                     //Если результат равен null и начало после момента и статус равен (это или это)
                     if (first == null && (b.getBookingStatus().equals(BookingStatus.APPROVED)
-                            || b.getBookingStatus().equals(BookingStatus.WAITING))) {
+                            || b.getBookingStatus().equals(BookingStatus.WAITING)))
                         first = b;
                         //если first = null и
-                    } else if (first == null) {
-                        first = b;
-                    } else if (b.getStartTime().isBefore(first.getStartTime())) {
-                        first = b;
-                    }
+                    else if (first == null) first = b;
+                    else if (b.getStartTime().isBefore(first.getStartTime())) first = b;
                 }
-            }
         }
         return first;
     }
@@ -270,21 +281,13 @@ public class ItemServiceImpl implements ItemService {
     private Booking findLastBookingByDate(List<Booking> bookings, LocalDateTime now) {
         Booking last = null;
 
-        if (bookings != null && !bookings.isEmpty()) {
-            for (Booking b : bookings) {
-                if (b.getEndTime().isBefore(now)) {
-                    //Если результат равен null и конец до момента и статус равен approved (подтверждено).
-                    if (last == null && (b.getBookingStatus().equals(BookingStatus.APPROVED))) {
-                        last = b;
-                        //если last = null
-                    } else if (last == null) {
-                        last = b;
-                    } else if (b.getEndTime().isAfter(last.getEndTime())) {
-                        last = b;
-                    }
-                }
+        if (bookings != null && !bookings.isEmpty()) for (Booking b : bookings)
+            if (b.getEndTime().isBefore(now)) {
+                if (last == null && (b.getBookingStatus().equals(BookingStatus.APPROVED))) last = b;
+                    //если last = null
+                else if (last == null) last = b;
+                else if (b.getEndTime().isAfter(last.getEndTime())) last = b;
             }
-        }
         return last;
     }
 }

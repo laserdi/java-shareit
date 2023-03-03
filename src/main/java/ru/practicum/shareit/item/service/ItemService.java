@@ -41,7 +41,7 @@ public interface ItemService {
      * Удалить вещь с ID из хранилища.
      * @param id ID удаляемой вещи.
      */
-    ItemDto removeItemById(Long id);
+    void removeItemById(Long id);
 
     /**
      * Поиск вещей по тексту.

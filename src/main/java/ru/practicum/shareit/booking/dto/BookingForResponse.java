@@ -13,14 +13,38 @@ import java.time.LocalDateTime;
 @ToString
 @RequiredArgsConstructor
 @AllArgsConstructor
+@Builder
 public class BookingForResponse {
+
+    /**
+     * ID бронирования.
+     */
     private Long id;
+    /**
+     * Дата начала бронирования.
+     */
     @JsonProperty("start")
     private LocalDateTime startTime;
+
+    /**
+     * Дата окончания бронирования.
+     */
     @JsonProperty("end")
     private LocalDateTime endTime;
+
+    /**
+     * Забронированная вещь.
+     */
     private ItemForResponseDto item;
+
+    /**
+     * Арендатор вещи.
+     */
     private UserOnlyWithIdDto booker;
+
+    /**
+     * Статус бронирования (в ожидании, подтверждён, отменён, )
+     */
     private BookingStatus status;
 
 }
