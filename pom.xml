@@ -12,8 +12,13 @@
     <groupId>ru.practicum</groupId>
     <artifactId>shareit</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
     <name>ShareIt</name>
+    <modules>
+        <module>gateway</module>
+        <module>server</module>
+    </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
