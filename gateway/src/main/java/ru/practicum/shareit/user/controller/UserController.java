@@ -2,6 +2,7 @@ package ru.practicum.shareit.user.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.NumberFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -60,8 +61,8 @@ public class UserController {
      * @param userId ID удаляемого пользователя.
      */
     @DeleteMapping("/{userId}")
-    public void removeFromStorage(@NotNull @PathVariable Long userId) {
-        userClient.removeFromStorage(userId);
+    public ResponseEntity<Object> removeFromStorage(@NumberFormat @PathVariable Long userId) {
+        return userClient.removeFromStorage(userId);
     }
 //        service.removeFromStorage(userId);
 //        String message = String.format("Выполнено удаление пользователя с ID = %d.", userId);

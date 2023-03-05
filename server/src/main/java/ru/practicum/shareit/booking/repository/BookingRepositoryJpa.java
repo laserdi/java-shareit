@@ -76,15 +76,15 @@ public interface BookingRepositoryJpa extends JpaRepository<Booking, Long> {
 
     /**
      * Возвращает все брони пользователя, статус которых такой-то.
-     * @param user          пользователь, брони которого надо найти.
+     * @param booker        пользователь, брони которого надо найти.
      * @param bookingStatus статус.
      * @param pageable      параметр постраничного отображения результатов запроса.
      * @return список бронирований.
      */
 
+//    @Query("select b from Booking b where b.booker = ?1 and b.bookingStatus = ?2 order by b.startTime DESC")
     List<Booking> findAllByBookerAndBookingStatusEqualsOrderByStartTimeDesc(
-            User user, BookingStatus bookingStatus, Pageable pageable);
-
+            User booker, BookingStatus bookingStatus, Pageable pageable);
 
     //////////////////////////////////
 

@@ -15,8 +15,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/items")
 @RequiredArgsConstructor
-@Validated
 @Slf4j
+@Validated
 public class ItemController {
     private final ItemService itemService;
 
@@ -33,8 +33,10 @@ public class ItemController {
     }
 
     @GetMapping("/search")
-    public Collection<ItemDto> searchItemsByText(@RequestParam(value = "text", required = false) String text) {
-        return itemService.searchItemsByText(text);
+    public Collection<ItemDto> searchItemsByText(@RequestParam(value = "text", required = false) String text,
+                                                 @RequestParam(name = "from", defaultValue = "0")int from,
+                                                 @RequestParam(name = "size", defaultValue = "10") int size) {
+        return itemService.searchItemsByText(text, from, size);
     }
 
     /**
@@ -51,7 +53,7 @@ public class ItemController {
 
     @PatchMapping("{itemId}")
     public ItemDto update(@RequestHeader(value = "X-Sharer-User-Id", required = false) Long ownerId,
-                          @PathVariable Long itemId, @Validated @RequestBody ItemDto itemDto) {
+                          @PathVariable Long itemId, @RequestBody ItemDto itemDto) {
         System.out.println(" - Обновление вещи с ID = " + itemId + " юзера с ID = " + ownerId + ".");
         return itemService.updateInStorage(itemId, itemDto, ownerId);
     }

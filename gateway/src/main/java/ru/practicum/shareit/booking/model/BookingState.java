@@ -14,27 +14,12 @@ public enum BookingState {
     REJECTED,
     UNKNOWN;
 
-    public static Optional<BookingState> parse(String s) {
-        if (BookingState.ALL.name().equalsIgnoreCase(s)) {
-            return Optional.of(BookingState.ALL);
-        }
-        if (BookingState.CURRENT.name().equalsIgnoreCase(s)) {
-            return Optional.of(BookingState.CURRENT);
-        }
-        if (BookingState.PAST.name().equalsIgnoreCase(s)) {
-            return Optional.of(BookingState.PAST);
-        }
-        if (BookingState.FUTURE.name().equalsIgnoreCase(s)) {
-            return Optional.of(BookingState.FUTURE);
-        }
-        if (BookingState.WAITING.name().equalsIgnoreCase(s)) {
-            return Optional.of(BookingState.WAITING);
-        }
-        if (BookingState.REJECTED.name().equalsIgnoreCase(s)) {
-            return Optional.of(BookingState.REJECTED);
-        }
-        if (BookingState.UNKNOWN.name().equalsIgnoreCase(s)) {
-            return Optional.empty();
+
+    public static Optional<BookingState> parse(String stringState) {
+        for (BookingState state : values()) {
+            if (state.name().equalsIgnoreCase(stringState)) {
+                return Optional.of(state);
+            }
         }
         return Optional.empty();
     }

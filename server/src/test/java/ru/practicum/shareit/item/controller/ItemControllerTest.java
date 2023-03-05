@@ -136,7 +136,7 @@ public class ItemControllerTest {
     @SneakyThrows   //позволяет "бесшумно" выбрасывать проверяемые исключения, не объявляя их явно в условии throws.
     @Test
     void testSearchItemsByText() {
-        when(itemService.searchItemsByText("found one item"))
+        when(itemService.searchItemsByText("found one item", 0, 10))
                 .thenReturn(List.of(itemDto));
 
         mockMvc.perform(get("/items/search")
@@ -145,11 +145,13 @@ public class ItemControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(List.of(itemDto))));
 
-        when(itemService.searchItemsByText("items not found"))
+        when(itemService.searchItemsByText("items not found", 0, 10))
                 .thenReturn(List.of());
 
         mockMvc.perform(get("/items/search")
                         .param("text", "items not found")
+                        .param("from", "0")
+                        .param("size", "10")
                         .header("X-Sharer-User-Id", "1"))
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(List.of())));

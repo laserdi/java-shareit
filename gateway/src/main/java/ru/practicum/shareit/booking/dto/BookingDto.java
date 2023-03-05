@@ -33,7 +33,7 @@ public class BookingDto {
     /**
      * Арендатор вещи.
      */
-    @NotNull(groups = {CreateObject.class}, message = "При создании брони должна быть информация о пользователе.")
+//    @NotNull(groups = {CreateObject.class}, message = "При создании брони должна быть информация о пользователе.")
     private UserForResponseDto booker;              //Арендатор вещи.
     /**
      * Дата начала бронирования.

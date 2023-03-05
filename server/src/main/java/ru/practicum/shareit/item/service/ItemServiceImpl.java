@@ -2,6 +2,9 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.mapper.BookingForItemDtoMapper;
 import ru.practicum.shareit.booking.model.Booking;
@@ -156,11 +159,12 @@ public class ItemServiceImpl implements ItemService {
      * @return список вещей.
      */
     @Override
-    public List<ItemDto> searchItemsByText(String text) {
+    public List<ItemDto> searchItemsByText(String text, Integer from, Integer size) {
         if (text == null || text.isBlank()) {
             return new ArrayList<>();
         }
-        List<Item> resultItems = itemRepositoryJpa.searchItemsByText(text);
+        Pageable pageable = PageRequest.of(from / size, size, Sort.unsorted());
+        List<Item> resultItems = itemRepositoryJpa.searchItemsByText(text, pageable);
         return resultItems.stream().map(itemMapper::mapToDto)
                 .filter(ItemDto::getAvailable).collect(Collectors.toList());
     }

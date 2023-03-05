@@ -2,15 +2,17 @@ package ru.practicum.shareit.item.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.exception.ValidateException;
+import ru.practicum.shareit.item.ItemClient;
 import ru.practicum.shareit.item.comment.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.ItemWithBookingAndCommentsDto;
-import ru.practicum.shareit.item.service.ItemService;
+import ru.practicum.shareit.validation.UpdateObject;
 
-import java.util.Collection;
-import java.util.List;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.PositiveOrZero;
 
 @RestController
 @RequestMapping("/items")
@@ -18,24 +20,8 @@ import java.util.List;
 @Validated
 @Slf4j
 public class ItemController {
-    private final ItemService itemService;
+    private final ItemClient itemClient;
 
-
-    @GetMapping("/{itemId}")
-    public ItemWithBookingAndCommentsDto getItemByIdForOwner(@RequestHeader(value = "X-Sharer-User-Id") Long ownerId,
-                                                             @PathVariable Long itemId) {
-        return itemService.getItemWithBookingAndComment(itemId, ownerId);
-    }
-
-    @GetMapping()
-    public List<ItemWithBookingAndCommentsDto> getAll(@RequestHeader("X-Sharer-User-Id") Long userId) {
-        return itemService.getItemsByUserId(userId);
-    }
-
-    @GetMapping("/search")
-    public Collection<ItemDto> searchItemsByText(@RequestParam(value = "text", required = false) String text) {
-        return itemService.searchItemsByText(text);
-    }
 
     /**
      * Добавление новой вещи. Будет происходить по эндофиту POST /items. На вход поступает объект ItemDto. userId в
@@ -44,23 +30,50 @@ public class ItemController {
      * @return добавленная в БД вещь.
      */
     @PostMapping
-    public ItemDto add(@RequestHeader(value = "X-Sharer-User-Id", required = false) Long ownerId,
-                       @RequestBody @Validated ItemDto itemDto) {
-        return itemService.add(itemDto, ownerId);
+    public ResponseEntity<Object> add(@RequestHeader(value = "X-Sharer-User-Id", required = false) Long ownerId,
+                                      @RequestBody @Validated ItemDto itemDto) {
+        return itemClient.add(itemDto, ownerId);
+    }
+
+    @GetMapping()
+    public ResponseEntity<Object> getAll(@RequestHeader("X-Sharer-User-Id") Long userId,
+                                         @Min(0) @RequestParam(name = "from", defaultValue = "0")
+                                         Integer from,
+                                         @Min(1) @RequestParam(name = "size", defaultValue = "10")
+                                         Integer size) {
+        return itemClient.getAllItems(userId, from, size);
+    }
+
+    @GetMapping("/{itemId}")
+    public ResponseEntity<Object> getItemByIdForOwner(@RequestHeader(value = "X-Sharer-User-Id") Long ownerId,
+                                                      @PathVariable Long itemId) {
+        return itemClient.getItemByIdForOwner(itemId, ownerId);
     }
 
     @PatchMapping("{itemId}")
-    public ItemDto update(@RequestHeader(value = "X-Sharer-User-Id", required = false) Long ownerId,
-                          @PathVariable Long itemId, @Validated @RequestBody ItemDto itemDto) {
+    public ResponseEntity<Object> update(@RequestHeader(value = "X-Sharer-User-Id") Long ownerId,
+                                         @PathVariable Long itemId, @Validated(UpdateObject.class) @RequestBody ItemDto itemDto) {
+        //Если все поля null, то исключение.
+        if (itemDto.getName() == null && itemDto.getDescription() == null && itemDto.getAvailable() == null) {
+            throw new ValidateException("При обновлении вещи все поля равны null.");
+        }
         System.out.println(" - Обновление вещи с ID = " + itemId + " юзера с ID = " + ownerId + ".");
-        return itemService.updateInStorage(itemId, itemDto, ownerId);
+        return itemClient.updateInStorage(itemId, itemDto, ownerId);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Object> searchItems(@RequestHeader("X-Sharer-User-Id") Long userId,
+                                              @RequestParam(value = "text", required = false) String text,
+                                              @PositiveOrZero @RequestParam(name = "from", defaultValue = "0")
+                                              Integer from,
+                                              @Min(1) @RequestParam(name = "size", defaultValue = "10")
+                                              Integer size) {
+        return itemClient.searchItemsByText(userId, text, from, size);
     }
 
     @PostMapping("/{itemId}/comment")
-    public CommentDto addCommentToItem(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                       @PathVariable Long itemId, @RequestBody CommentDto inputCommentDto) {
-        return itemService.saveComment(userId, itemId, inputCommentDto);
+    public ResponseEntity<Object> addCommentToItem(@RequestHeader("X-Sharer-User-Id") Long userId,
+                                                   @PathVariable Long itemId, @RequestBody CommentDto inputCommentDto) {
+        return itemClient.saveComment(userId, itemId, inputCommentDto);
     }
-
-
 }

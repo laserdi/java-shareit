@@ -52,5 +52,6 @@ public class Booking {
      * Статус бронирования (в ожидании, подтверждён, отменён, )
      */
     @Column(name = "status")
+    @Enumerated(EnumType.STRING)
     private BookingStatus bookingStatus;//Статус бронирования (в ожидании, подтверждён, отменён, )
 }

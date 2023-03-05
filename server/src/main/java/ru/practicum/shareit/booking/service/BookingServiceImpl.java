@@ -114,7 +114,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingForResponse getWithStatusById(Long userId, Long bookingId) {
         Booking booking = bookingRepositoryJpa.findById(bookingId)
                 .orElseThrow(() -> new NotFoundRecordInBD("Бронирование с ID = '" + bookingId
-                        + "не найдено в БД при его получении."));
+                        + " не найдено в БД при его получении."));
         Long bookerId = booking.getBooker().getId();            //ID пользователя, забронировавшего вещь.
         Long ownerId = booking.getItem().getOwner().getId();    //ID хозяина вещи в бронировании.
         if (userId.equals(bookerId) || userId.equals(ownerId)) {
@@ -176,6 +176,7 @@ public class BookingServiceImpl implements BookingService {
                 break;
             }
             case FUTURE: {
+//                System.out.println(bookingRepositoryJpa.findByIdIsNotOrderByStartTime(100L).stream().map(Booking::toString));
                 result = bookingRepositoryJpa.findAllByBookerAndStartTimeIsAfterOrderByStartTimeDesc(
                         bookerFromDb, nowDateTime, pageable);
                 break;
@@ -252,11 +253,13 @@ public class BookingServiceImpl implements BookingService {
                 break;
             }
             case WAITING: {
-                result = bookingRepositoryJpa.findAllByItem_OwnerAndBookingStatusEqualsOrderByStartTimeDesc(bookerFromDb, BookingStatus.WAITING, pageable);
+                result = bookingRepositoryJpa.findAllByItem_OwnerAndBookingStatusEqualsOrderByStartTimeDesc(
+                        bookerFromDb, BookingStatus.WAITING, pageable);
                 break;
             }
             case REJECTED: {
-                result = bookingRepositoryJpa.findAllByItem_OwnerAndBookingStatusEqualsOrderByStartTimeDesc(bookerFromDb, BookingStatus.REJECTED, pageable);
+                result = bookingRepositoryJpa.findAllByItem_OwnerAndBookingStatusEqualsOrderByStartTimeDesc(
+                        bookerFromDb, BookingStatus.REJECTED, pageable);
                 break;
             }
             case UNKNOWN: {

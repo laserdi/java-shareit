@@ -29,8 +29,8 @@ public class UserClient extends BaseClient {
         return post("", userDto);
     }
 
-    public void removeFromStorage(Long userId) {
-        delete("/" + userId);
+    public ResponseEntity<Object> removeFromStorage(Long userId) {
+        return delete("/" + userId);
     }
 
     public ResponseEntity<Object> updateInStorage(UserDto userDto, Long userId) {

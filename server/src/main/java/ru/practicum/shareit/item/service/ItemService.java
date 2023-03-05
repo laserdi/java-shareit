@@ -48,7 +48,7 @@ public interface ItemService {
      * @param text текст.
      * @return список вещей.
      */
-    List<ItemDto> searchItemsByText(String text);
+    List<ItemDto> searchItemsByText(String text, Integer from, Integer size);
 
     /**
      * Теперь нужно, чтобы владелец видел даты последнего и ближайшего следующего

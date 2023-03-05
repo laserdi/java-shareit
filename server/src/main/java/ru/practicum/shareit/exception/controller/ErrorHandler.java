@@ -48,9 +48,9 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<?> handleForMethodArgumentNotValidException(final MethodArgumentNotValidException ex) {
-//        String error = "Error 400. Не правильное значение аргумента.";
-//        String message = ex.getMessage();
-//        log.error(error);
+        String error = "Error 400. Не правильное значение аргумента.\t" + ex.getMessage();
+        String message = ex.getMessage();
+        log.error(error);
 //        System.out.println(message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error 400. Не правильное значение аргумента.");
     }

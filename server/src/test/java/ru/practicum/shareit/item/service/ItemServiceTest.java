@@ -6,6 +6,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingForResponse;
@@ -376,7 +379,7 @@ class ItemServiceTest {
 
         ItemDto savedItemDto02 = itemService.add(itemDto02, savedOwnerDto1.getId());
 
-        List<ItemDto> itemDtoList = itemService.searchItemsByText("nEw");
+        List<ItemDto> itemDtoList = itemService.searchItemsByText("nEw", 0, 10);
 
         assertNotNull(itemDtoList);
         assertEquals(1, itemDtoList.size());
@@ -393,7 +396,7 @@ class ItemServiceTest {
 
         ItemDto savedItemDto02 = itemService.add(itemDto02, savedOwnerDto1.getId());
 
-        List<ItemDto> itemDtoList = itemService.searchItemsByText("");
+        List<ItemDto> itemDtoList = itemService.searchItemsByText("", 0, 10);
 
         assertNotNull(itemDtoList);
         assertEquals(0, itemDtoList.size());
