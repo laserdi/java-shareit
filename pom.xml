@@ -31,47 +31,71 @@
 
 
     <dependencies>
+        <!--Dependency is duplicated in file(s): ShareIt Gateway and ShareIt Server -->
+<!--
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+-->
 
+        <!--Dependency is duplicated in file(s): ShareIt Server -->
+<!--
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+-->
 
+<!--Dependency is duplicated in file(s): ShareIt Server -->
+<!--
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
+-->
 
+        <!--Dependency is duplicated in file(s): ShareIt Server -->
+<!--
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+-->
 
+        <!--Dependency is duplicated in file(s): ShareIt Gateway and ShareIt Server -->
+<!--
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
+-->
+        <!--Dependency is duplicated in file(s): ShareIt Gateway and ShareIt Server -->
+<!--
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+-->
+        <!--Dependency is duplicated in file(s): ShareIt Gateway and ShareIt Server -->
+<!--
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+-->
+        <!--Dependency is duplicated in file(s): ShareIt Gateway -->
+<!--
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+-->
 
 
         <dependency>
@@ -79,10 +103,13 @@
             <artifactId>mapstruct</artifactId>
             <version>${org.mapstruct.version}</version>
         </dependency>
+        <!--        //////////////////////////////////////////////-->
+<!--
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+-->
 
     </dependencies>
 
