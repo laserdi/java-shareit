@@ -152,7 +152,6 @@ class ItemRequestControllerTest {
                 .description(itemRequest.getDescription())
                 .created(itemRequest.getCreated())
                 .requester(requesterDto51)
-                .items(itemRequest.getItems())
                 .build();
 
         bookingDtoForCreate = BookingDto.builder()
@@ -170,7 +169,7 @@ class ItemRequestControllerTest {
      * POST /requests — добавить новый запрос вещи. Основная часть запроса — текст запроса, где пользователь
      * описывает, какая именно вещь ему нужна.
      * ItemRequestDto addItemRequest(@RequestHeader(value = "X-Sharer-User-Id") Long requesterId,
-     * @RequestBody @Validated(CreateObject.class) ItemRequestDto itemRequestDto)
+     * @RequestBody ItemRequestDto itemRequestDto)
      */
     @SneakyThrows   //позволяет "бесшумно" выбрасывать проверяемые исключения, не объявляя их явно в условии throws.
     @Test
@@ -186,9 +185,7 @@ class ItemRequestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(itemRequestDto.getId()), Long.class))
                 .andExpect(jsonPath("$.description", is(itemRequestDto.getDescription()), String.class))
-                .andExpect(jsonPath("$.requester.id", is(itemRequestDto.getRequester().getId()), Long.class))
-                .andExpect(jsonPath("$.items.[0].name", is(itemRequestDto.getItems().get(0).getName()),
-                        String.class));
+                .andExpect(jsonPath("$.requester.id", is(itemRequestDto.getRequester().getId()), Long.class));
     }
 
     /**

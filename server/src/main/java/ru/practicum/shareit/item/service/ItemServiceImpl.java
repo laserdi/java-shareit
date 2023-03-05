@@ -24,7 +24,6 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepositoryJpa;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepositoryJpa;
-import ru.practicum.shareit.validation.ValidationService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,7 +37,6 @@ public class ItemServiceImpl implements ItemService {
     private final BookingRepositoryJpa bookingRepositoryJpa;
     private final ItemRepositoryJpa itemRepositoryJpa;
     private final UserRepositoryJpa userRepository;
-    private final ValidationService validationService;
     private final ItemMapper itemMapper;
     private final BookingForItemDtoMapper bookingForItemDtoMapper;
     private final CommentRepository commentRepository;
@@ -97,7 +95,7 @@ public class ItemServiceImpl implements ItemService {
                         "' при добавлении вещи в репозиторий"));
         Item item = itemMapper.mapToModel(itemDto);
         item.setOwner(owner);
-        validationService.validateItemFields(item);
+//        validationService.validateItemFields(item);
         return itemMapper.mapToDto(itemRepositoryJpa.save(item));
     }
 

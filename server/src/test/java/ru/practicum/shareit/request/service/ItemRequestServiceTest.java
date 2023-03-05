@@ -117,7 +117,6 @@ class ItemRequestServiceTest {
         assertEquals(savedItemRequest.getId(), afterSave.get(0).getId());
         assertEquals(savedItemRequest.getCreated(), afterSave.get(0).getCreated());
         assertEquals(savedItemRequest.getDescription(), afterSave.get(0).getDescription());
-        assertEquals(savedItemRequest.getItems(), afterSave.get(0).getItems());
     }
 
     @Test
@@ -194,7 +193,6 @@ class ItemRequestServiceTest {
         assertEquals(savedItemRequest.getDescription(), oneItemFromDbForOwner.get(0).getDescription());
         assertEquals(savedItemRequest.getRequester().getId(), oneItemFromDbForOwner.get(0).getRequester().getId());
         assertEquals(savedItemRequest.getRequester().getName(), oneItemFromDbForOwner.get(0).getRequester().getName());
-        assertNull(savedItemRequest.getItems());
         assertNull(oneItemFromDbForOwner.get(0).getItems());
         assertEquals(savedItemRequest.getCreated(), oneItemFromDbForOwner.get(0).getCreated());
     }

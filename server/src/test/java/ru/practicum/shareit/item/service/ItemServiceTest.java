@@ -6,9 +6,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingForResponse;
@@ -38,7 +35,6 @@ import ru.practicum.shareit.user.mapper.UserForResponseMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepositoryJpa;
 import ru.practicum.shareit.user.service.UserService;
-import ru.practicum.shareit.validation.ValidationService;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
@@ -640,8 +636,9 @@ class ItemServiceTest {
         UserRepositoryJpa userRepositoryJpa2 = mock(UserRepositoryJpa.class);
         ItemRepositoryJpa itemRepositoryJpa2 = mock(ItemRepositoryJpa.class);
         CommentRepository commentRepository2 = mock(CommentRepository.class);
-        ValidationService validationService2 = mock(ValidationService.class);
-        ItemService itemService2 = new ItemServiceImpl(bookingRepositoryJpa, itemRepositoryJpa2, userRepositoryJpa2, validationService2,
+//        ValidationService validationService2 = mock(ValidationService.class);
+//        ItemService itemService2 = new ItemServiceImpl(bookingRepositoryJpa, itemRepositoryJpa2, userRepositoryJpa2, validationService2,
+        ItemService itemService2 = new ItemServiceImpl(bookingRepositoryJpa, itemRepositoryJpa2, userRepositoryJpa2,
                 itemMapper, bookingForItemDtoMapper, commentRepository2, itemWithBAndCDtoMapper, commentDtoMapper);
 
         when(userRepositoryJpa2.findById(any()))
@@ -739,8 +736,8 @@ class ItemServiceTest {
         UserRepositoryJpa userRepositoryJpa2 = mock(UserRepositoryJpa.class);
         ItemRepositoryJpa itemRepositoryJpa2 = mock(ItemRepositoryJpa.class);
         CommentRepository commentRepository2 = mock(CommentRepository.class);
-        ValidationService validationService2 = mock(ValidationService.class);
-        ItemService itemService2 = new ItemServiceImpl(bookingRepositoryJpa, itemRepositoryJpa2, userRepositoryJpa2, validationService2,
+//        ItemService itemService2 = new ItemServiceImpl(bookingRepositoryJpa, itemRepositoryJpa2, userRepositoryJpa2, validationService2,
+        ItemService itemService2 = new ItemServiceImpl(bookingRepositoryJpa, itemRepositoryJpa2, userRepositoryJpa2,
                 itemMapper, bookingForItemDtoMapper, commentRepository2, itemWithBAndCDtoMapper, commentDtoMapper);
 
         when(userRepositoryJpa2.findById(any()))

@@ -7,6 +7,7 @@ import ru.practicum.shareit.booking.model.Booking;
 
 @Mapper(componentModel = "spring")
 public interface BookingForItemDtoMapper {
+
     /**
      * Из объекта для ответа в контроллере в бронь.
      */

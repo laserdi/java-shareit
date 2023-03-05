@@ -9,6 +9,7 @@ import ru.practicum.shareit.exception.ValidateException;
 import ru.practicum.shareit.item.ItemClient;
 import ru.practicum.shareit.item.comment.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.validation.CreateObject;
 import ru.practicum.shareit.validation.UpdateObject;
 
 import javax.validation.constraints.Min;
@@ -31,7 +32,7 @@ public class ItemController {
      */
     @PostMapping
     public ResponseEntity<Object> add(@RequestHeader(value = "X-Sharer-User-Id", required = false) Long ownerId,
-                                      @RequestBody @Validated ItemDto itemDto) {
+                                      @RequestBody @Validated(CreateObject.class) ItemDto itemDto) {
         return itemClient.add(itemDto, ownerId);
     }
 

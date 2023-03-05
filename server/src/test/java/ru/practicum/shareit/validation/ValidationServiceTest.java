@@ -1,26 +1,21 @@
 package ru.practicum.shareit.validation;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import ru.practicum.shareit.exception.ValidateException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.ArrayList;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 class ValidationServiceTest {
-    ValidationService validationService;
+//    ValidationService validationService;
     Item item;
     User owner1;
     UserDto ownerDto1;
 
     @BeforeEach
     void setUp() {
-        validationService = new ValidationService();
+//        validationService = new ValidationService();
         ownerDto1 = UserDto.builder()
                 .name("name userDto1")
                 .email("userDto1@mans.gf")
@@ -42,35 +37,35 @@ class ValidationServiceTest {
                 .build();
     }
 
-    @Test
-    void validateItemFields_whenNameIsBlank_returnValidateException() {
-        item.setName("");
-        ValidateException ex = assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
-        assertEquals("Название вещи не может пустым.", ex.getMessage());
-    }
+//    @Test
+//    void validateItemFields_whenNameIsBlank_returnValidateException() {
+//        item.setName("");
+//        ValidateException ex = assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
+//        assertEquals("Название вещи не может пустым.", ex.getMessage());
+//    }
 
-    @Test
-    void validateItemFields_whenDescriptionIsBlank_returnValidateException() {
-        item.setDescription("");
-        ValidateException ex =
-                assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
-        assertEquals("Описание вещи не может быть пустым.", ex.getMessage());
+//    @Test
+//    void validateItemFields_whenDescriptionIsBlank_returnValidateException() {
+//        item.setDescription("");
+//        ValidateException ex =
+//                assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
+//        assertEquals("Описание вещи не может быть пустым.", ex.getMessage());
+//
+//    }
 
-    }
+//    @Test
+//    void validateItemFields_whenStatusIsNull_returnValidateException() {
+//        item.setAvailable(null);
+//        ValidateException ex =
+//                assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
+//        assertEquals("Для вещи необходим статус её бронирования.", ex.getMessage());
+//    }
 
-    @Test
-    void validateItemFields_whenStatusIsNull_returnValidateException() {
-        item.setAvailable(null);
-        ValidateException ex =
-                assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
-        assertEquals("Для вещи необходим статус её бронирования.", ex.getMessage());
-    }
-
-    @Test
-    void validateItemFields_whenOwnerIsNull_returnValidateException() {
-        item.setOwner(null);
-        ValidateException ex =
-                assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
-        assertEquals("Для вещи необходим хозяин.", ex.getMessage());
-    }
+//    @Test
+//    void validateItemFields_whenOwnerIsNull_returnValidateException() {
+//        item.setOwner(null);
+//        ValidateException ex =
+//                assertThrows(ValidateException.class, () -> validationService.validateItemFields(item));
+//        assertEquals("Для вещи необходим хозяин.", ex.getMessage());
+//    }
 }

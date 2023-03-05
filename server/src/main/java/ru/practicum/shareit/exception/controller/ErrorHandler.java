@@ -2,6 +2,7 @@ package ru.practicum.shareit.exception.controller;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -53,5 +54,15 @@ public class ErrorHandler {
         log.error(error);
 //        System.out.println(message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error 400. Не правильное значение аргумента.");
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<?> handleForPSQLException(final DataIntegrityViolationException ex) {
+        String error = "Error 409. Не правильное значение аргумента при добавлении в БД.\nВероятное дублирование.\t" + ex.getMessage();
+        String message = ex.getMessage();
+        log.error(error);
+//        System.out.println(message);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 }

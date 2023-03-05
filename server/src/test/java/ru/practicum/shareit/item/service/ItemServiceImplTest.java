@@ -15,7 +15,6 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepositoryJpa;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepositoryJpa;
-import ru.practicum.shareit.validation.ValidationService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,7 +34,7 @@ class ItemServiceImplTest {
     UserRepositoryJpa userRepositoryJpa;
     ItemRepositoryJpa itemRepositoryJpa;
     CommentRepository commentRepository;
-    ValidationService validationService;
+//    ValidationService validationService;
     LocalDateTime now = LocalDateTime.now();
 
     @BeforeEach
@@ -104,7 +103,7 @@ class ItemServiceImplTest {
         UserRepositoryJpa userRepositoryJpa2 = mock(UserRepositoryJpa.class);
         ItemRepositoryJpa itemRepositoryJpa2 = mock(ItemRepositoryJpa.class);
         CommentRepository commentRepository2 = mock(CommentRepository.class);
-        ValidationService validationService2 = mock(ValidationService.class);
+//        ValidationService validationService2 = mock(ValidationService.class);
         CommentDtoMapper commentDtoMapper2;
 //        ItemService itemService2 = new ItemServiceImpl(itemRepositoryJpa2, userRepositoryJpa2, validationService2,
 //                itemMapper, bookingForItemDtoMapper, commentRepository2, itemWithBAndCDtoMapper, commentDtoMapper);

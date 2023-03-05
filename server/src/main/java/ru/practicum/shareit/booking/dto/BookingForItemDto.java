@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 @Setter
 @RequiredArgsConstructor
 @AllArgsConstructor
-//@ToString
-@Builder
+@ToString
+@Builder(toBuilder = true)
 public class BookingForItemDto {
     /**
      * ID бронирования.

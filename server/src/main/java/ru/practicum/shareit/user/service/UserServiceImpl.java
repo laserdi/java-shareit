@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.NotFoundRecordInBD;
-import ru.practicum.shareit.exception.ValidateException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
@@ -56,10 +55,12 @@ public class UserServiceImpl implements UserService {
      * @return добавляемый пользователь.
      */
     @Override
-    public UserDto addToStorage(UserDto userDto) throws ValidateException, NotFoundRecordInBD {
+    public UserDto addToStorage(UserDto userDto) {
         log.info("Добавление пользователя в БД.");
         User user = mapper.mapToModel(userDto);
-        return mapper.mapToDto(userRepository.save(user));
+        UserDto result = mapper.mapToDto(userRepository.save(user));
+        System.out.println("/////////////////////////////////////////////" + result);
+        return result;
     }
 
     /**

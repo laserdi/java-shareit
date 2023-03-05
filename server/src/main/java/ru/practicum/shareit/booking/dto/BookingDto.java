@@ -5,9 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.user.dto.UserForResponseDto;
-import ru.practicum.shareit.validation.CreateObject;
 
-import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Getter
@@ -25,9 +23,7 @@ public class BookingDto {
     /**
      * ID вещи.
      */
-    @NotNull(groups = {CreateObject.class}, message = "При создании брони должна быть информация о вещи.")
     private Long itemId;              //ID вещи.
-    //@NotNull(groups = {CreateObject.class}, message = "При создании брони должна быть информация о пользователе.")
     /**
      * Арендатор вещи.
      */
