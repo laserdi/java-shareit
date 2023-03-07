@@ -9,7 +9,6 @@ import ru.practicum.shareit.request.dto.ItemRequestDtoWithAnswers;
 import ru.practicum.shareit.request.service.ItemRequestService;
 import ru.practicum.shareit.validation.CreateObject;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -69,7 +68,7 @@ public class ItemRequestController {
      * в том же формате, что и в эндпоинте GET /requests. Посмотреть данные об отдельном запросе может любой пользователь.
      */
     @GetMapping("{requestId}")
-    public ItemRequestDtoWithAnswers getItemRequestById(@NotNull @RequestHeader("X-Sharer-User-Id") Long userId,
+    public ItemRequestDtoWithAnswers getItemRequestById(@RequestHeader("X-Sharer-User-Id") Long userId,
                                                         @PathVariable Long requestId) {
         log.info("Получение запроса на вещь с определённым ID.");
         return itemRequestService.getItemRequestById(requestId, userId);

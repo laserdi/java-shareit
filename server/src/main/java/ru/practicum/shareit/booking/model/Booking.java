@@ -5,7 +5,6 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Entity
@@ -40,13 +39,11 @@ public class Booking {
      * Дата начала бронирования.
      */
     @Column(name = "start_time")
-    @NotNull
     private LocalDateTime startTime;    //Дата начала бронирования. Видно везде.
     /**
      * Дата окончания бронирования.
      */
     @Column(name = "end_time")
-    @NotNull
     private LocalDateTime endTime;      //Дата окончания бронирования. Видно везде.
     /**
      * Статус бронирования (в ожидании, подтверждён, отменён, )

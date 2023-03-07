@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @AllArgsConstructor
 //@ToString
-@Builder
+@Builder(toBuilder = true)
 public class BookingForItemDto {
     /**
      * ID бронирования.

@@ -4,11 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
-import ru.practicum.shareit.validation.CreateObject;
 
 import java.util.List;
 
@@ -16,7 +14,6 @@ import java.util.List;
 @RequestMapping("users")
 @Slf4j
 @RequiredArgsConstructor
-@Validated
 public class UserController {
     private final UserService service;
 
@@ -26,7 +23,7 @@ public class UserController {
      * @return добавляемый пользователь.
      */
     @PostMapping
-    public ResponseEntity<UserDto> addToStorage(@RequestBody @Validated(CreateObject.class) UserDto userDto) {
+    public ResponseEntity<UserDto> addToStorage(@RequestBody UserDto userDto) {
 
         UserDto createdUser = service.addToStorage(userDto);
         ResponseEntity<UserDto> response = new ResponseEntity<>(

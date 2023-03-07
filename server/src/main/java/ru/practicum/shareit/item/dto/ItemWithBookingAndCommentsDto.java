@@ -12,7 +12,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @AllArgsConstructor
 @ToString
-@Builder
+@Builder(toBuilder = true)
 public class ItemWithBookingAndCommentsDto {
     private Long id;
     private String name;

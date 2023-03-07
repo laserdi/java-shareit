@@ -7,7 +7,7 @@ import lombok.*;
 @ToString
 @RequiredArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class UserForResponseDto {
     /**
      * ID пользователя.

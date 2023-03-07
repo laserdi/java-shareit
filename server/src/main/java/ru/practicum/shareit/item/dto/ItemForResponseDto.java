@@ -7,7 +7,7 @@ import lombok.*;
 @ToString
 @RequiredArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class ItemForResponseDto {
     private Long id;            //Идентификатор вещи.
     private String name;        //Название вещи.

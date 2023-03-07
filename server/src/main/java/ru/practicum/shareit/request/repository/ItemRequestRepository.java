@@ -24,7 +24,7 @@ public interface ItemRequestRepository extends JpaRepository<ItemRequest, Long> 
      * Получить заявки пользователя.
      * @param userId ID пользователя.
      * @param pageable пагинация страницы.
-     * @return
+     * @return список заявок пользователя.
      */
     List<ItemRequest> getAllByRequester_Id(Long userId, Pageable pageable);
 }

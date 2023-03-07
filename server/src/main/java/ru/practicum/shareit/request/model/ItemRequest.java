@@ -5,7 +5,6 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -25,7 +24,7 @@ public class ItemRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false, unique = true)
     private Long id;                //уникальный идентификатор запроса;
-    @NotBlank(message = "Описание запроса вещи не может быть пустым.")
+//    @NotBlank(message = "Описание запроса вещи не может быть пустым.")
     @Column(name = "description", nullable = false)
     private String description;     //текст запроса, содержащий описание требуемой вещи;
     @ManyToOne(fetch = FetchType.LAZY)

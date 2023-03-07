@@ -6,8 +6,6 @@ import ru.practicum.shareit.item.comment.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 
 import javax.persistence.*;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
 import java.util.List;
 
 @Entity
@@ -15,7 +13,7 @@ import java.util.List;
 @Setter
 @RequiredArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 @Table(name = "users", schema = "public")
 public class User {
     /**
@@ -29,14 +27,14 @@ public class User {
      * Имя пользователя.
      */
     @Column(name = "name", nullable = false)
-    @NotBlank
+//    @NotBlank
     private String name;    //Имя пользователя.
     /**
      * Электронная почта.
      */
     @Column(name = "email", nullable = false)
-    @NotBlank
-    @Email
+//    @NotBlank
+//    @Email
     private String email;   //Электронная почта.
     @OneToMany(mappedBy = "owner")
     private List<Item> items;//Вещи, принадлежащие пользователю.

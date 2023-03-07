@@ -8,7 +8,7 @@ import ru.practicum.shareit.booking.dto.BookingForItemDto;
 @ToString
 @RequiredArgsConstructor
 @AllArgsConstructor
-//@Builder
+@Builder
 public class ItemWithBookingDto {
     private Long id;
     private String name;
